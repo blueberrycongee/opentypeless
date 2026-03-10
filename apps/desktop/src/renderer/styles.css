@@ -302,3 +302,86 @@ button:disabled {
     width: 100%;
   }
 }
+
+.setup-guide,
+.permission-card,
+.shortcut-card {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.setup-guide {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 20px;
+}
+
+.setup-guide h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.setup-steps {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setup-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.setup-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.permission-card,
+.shortcut-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.permission-card--ready {
+  border-color: rgba(47, 107, 71, 0.22);
+  background: rgba(244, 251, 246, 0.9);
+}
+
+.permission-card--blocked {
+  border-color: rgba(179, 92, 30, 0.22);
+}
+
+.permission-actions,
+.shortcut-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.shortcut-card {
+  margin-bottom: 18px;
+}
