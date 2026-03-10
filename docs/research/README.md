@@ -1,9 +1,11 @@
 # Research Notes
 
 Use this folder for:
-- competitor research
+- competitor and benchmark research
 - user research
 - technical investigation notes
-- links and references
-- competitor and benchmark research
+- source indexes and references
 
+Current starting points:
+- `docs/research/competitors/README.md`
+- `docs/research/typeless-benchmark.md`

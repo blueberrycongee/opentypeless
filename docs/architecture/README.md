@@ -5,3 +5,7 @@ Use this folder for:
 - component boundaries
 - storage decisions
 - platform integration details
+- state models and sequence diagrams
+
+Current starting point:
+- `docs/architecture/desktop-system-overview.md`
