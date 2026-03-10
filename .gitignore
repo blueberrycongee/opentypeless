@@ -48,3 +48,6 @@ test-results/
 # Misc
 *.pid
 *.seed
+
+# Agent planning artifacts
+docs/plans/

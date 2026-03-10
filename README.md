@@ -42,12 +42,12 @@ OpenTypeless aims to explore a third path:
 
 ## Current status
 
-This repository is in the early foundation stage.
-There is not yet a runnable desktop application.
+This repository now includes an initial runnable Electron desktop shell, but the core dictation workflow is still under active construction.
 The repository currently contains:
 - product definition notes
 - competitor research
 - initial architecture framing
+- an initial Electron desktop shell under `apps/desktop/`
 - GitHub community and contribution files
 
 ## Initial feature benchmark
