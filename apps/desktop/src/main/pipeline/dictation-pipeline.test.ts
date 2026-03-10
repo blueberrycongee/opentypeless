@@ -6,7 +6,7 @@ import test from 'node:test';
 
 import { createDictationPipeline } from './dictation-pipeline';
 
-test('saveCapturedAudio stores raw audio and a pending pipeline manifest', async () => {
+test('saveCapturedAudio stores raw audio and a queued pipeline manifest', async () => {
   const root = await mkdtemp(join(tmpdir(), 'opentypeless-pipeline-'));
   const pipeline = createDictationPipeline(root);
 
@@ -23,14 +23,63 @@ test('saveCapturedAudio stores raw audio and a pending pipeline manifest', async
   assert.equal(session.pipeline.storage, 'completed');
   assert.equal(session.pipeline.transcription, 'pending');
   assert.equal(session.pipeline.rewrite, 'pending');
+  assert.equal(session.pipeline.send, 'pending');
 
   const audioFile = await readFile(join(root, session.audio.relativePath));
   assert.deepEqual([...audioFile], [1, 2, 3, 4, 5]);
 
   const manifestFile = await readFile(join(root, 'sessions', `${session.id}.json`), 'utf8');
-  const manifest = JSON.parse(manifestFile) as { id: string; pipeline: { transcription: string } };
+  const manifest = JSON.parse(manifestFile) as { id: string; pipeline: { transcription: string; send: string } };
   assert.equal(manifest.id, session.id);
   assert.equal(manifest.pipeline.transcription, 'pending');
+  assert.equal(manifest.pipeline.send, 'pending');
+});
+
+test('processSession runs transcription, rewrite, and simulated send in order', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'opentypeless-pipeline-'));
+  const pipeline = createDictationPipeline(root, {
+    transcribeAudio: async (audioPath) => {
+      assert.match(audioPath, /audio\//);
+      return {
+        transcript: 'hey sam lets meet at noon',
+        normalizedAudioRelativePath: 'derived/example.wav'
+      };
+    },
+    rewriteTranscript: async (transcript) => {
+      assert.equal(transcript, 'hey sam lets meet at noon');
+      return 'Hey Sam, let\'s meet at noon.';
+    },
+    simulateSend: async (message) => {
+      assert.equal(message, 'Hey Sam, let\'s meet at noon.');
+      return {
+        channel: 'simulated-chat',
+        deliveredText: message,
+        deliveredAt: '2026-03-10T10:00:00.000Z'
+      };
+    }
+  });
+
+  const saved = await pipeline.saveCapturedAudio({
+    audioBytes: [7, 6, 5],
+    durationMs: 900,
+    mimeType: 'audio/webm'
+  });
+  const processed = await pipeline.processSession(saved.id);
+
+  assert.equal(processed.pipeline.transcription, 'completed');
+  assert.equal(processed.pipeline.rewrite, 'completed');
+  assert.equal(processed.pipeline.send, 'completed');
+  assert.equal(processed.transcript?.text, 'hey sam lets meet at noon');
+  assert.equal(processed.rewrite?.text, 'Hey Sam, let\'s meet at noon.');
+  assert.equal(processed.delivery?.channel, 'simulated-chat');
+  assert.equal(processed.audio.normalizedRelativePath, 'derived/example.wav');
+
+  const reloaded = await pipeline.getSession(saved.id);
+  assert.equal(reloaded?.rewrite?.text, 'Hey Sam, let\'s meet at noon.');
+
+  const outbox = JSON.parse(await readFile(join(root, 'outbox', 'messages.json'), 'utf8')) as Array<{ text: string }>;
+  assert.equal(outbox.length, 1);
+  assert.equal(outbox[0].text, 'Hey Sam, let\'s meet at noon.');
 });
 
 test('listSessions returns newest sessions first', async () => {

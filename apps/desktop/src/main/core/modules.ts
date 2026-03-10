@@ -16,25 +16,25 @@ export const plannedModules: RuntimeModule[] = [
   {
     id: 'transcription',
     label: 'Transcription',
-    status: 'planned',
-    note: 'Next step: plug a speech-to-text model into the saved raw audio pipeline.'
+    status: 'ready',
+    note: 'Local whisper.cpp transcription runs on saved audio after ffmpeg normalization.'
   },
   {
     id: 'rewrite',
     label: 'Rewrite',
-    status: 'planned',
-    note: 'Next step: send raw transcript into a cleanup and rewrite model.'
+    status: 'ready',
+    note: 'A local Ollama-hosted open-source model cleans transcripts into send-ready messages.'
   },
   {
     id: 'insertion',
     label: 'Insertion',
     status: 'planned',
-    note: 'Return final text to the focused desktop app.'
+    note: 'System-wide insertion is still pending; this milestone verifies a simulated send outbox.'
   },
   {
     id: 'local-data',
     label: 'Local data',
     status: 'ready',
-    note: 'Session manifests and raw audio files are persisted under the app data directory.'
+    note: 'Session manifests, normalized audio paths, transcripts, rewrites, and outbox entries are persisted locally.'
   }
 ];

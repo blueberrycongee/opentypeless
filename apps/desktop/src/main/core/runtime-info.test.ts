@@ -14,5 +14,7 @@ test('buildRuntimeInfo returns app shell metadata and module placeholders', () =
     ['hotkeys', 'audio', 'transcription', 'rewrite', 'insertion', 'local-data']
   );
   assert.equal(info.modules.find((module) => module.id === 'audio')?.status, 'ready');
+  assert.equal(info.modules.find((module) => module.id === 'transcription')?.status, 'ready');
+  assert.equal(info.modules.find((module) => module.id === 'rewrite')?.status, 'ready');
   assert.equal(info.modules.find((module) => module.id === 'local-data')?.status, 'ready');
 });

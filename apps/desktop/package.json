@@ -9,6 +9,8 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
+    "ai:setup": "./scripts/setup-local-ai.sh",
+    "verify:e2e": "node --import tsx ./scripts/verify-e2e.ts",
     "lint": "eslint --ext .ts .",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test src/**/*.test.ts"

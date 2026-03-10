@@ -1,13 +1,16 @@
 import './styles.css';
 
-import type { DictationSession, RuntimeInfo } from '../shared/ipc';
+import type { DictationSession, RuntimeInfo, SentMessage } from '../shared/ipc';
 
 interface AppState {
   info: RuntimeInfo;
   isRecording: boolean;
+  isRefreshing: boolean;
+  busySessionId: string | null;
   recorder: MediaRecorder | null;
   recordingStartedAt: number | null;
   sessions: DictationSession[];
+  sentMessages: SentMessage[];
   statusMessage: string;
   stream: MediaStream | null;
 }
@@ -15,10 +18,13 @@ interface AppState {
 const state: AppState = {
   info: null as unknown as RuntimeInfo,
   isRecording: false,
+  isRefreshing: false,
+  busySessionId: null,
   recorder: null,
   recordingStartedAt: null,
   sessions: [],
-  statusMessage: 'Ready to capture microphone audio and store it locally.',
+  sentMessages: [],
+  statusMessage: 'Ready to capture microphone audio, transcribe it locally, rewrite it locally, and simulate a send.',
   stream: null
 };
 
@@ -40,20 +46,53 @@ function moduleMarkup(info: RuntimeInfo): string {
 
 function sessionMarkup(sessions: DictationSession[]): string {
   if (sessions.length === 0) {
-    return '<li class="empty-state">No recordings saved yet. Start one to verify the local pipeline.</li>';
+    return '<li class="empty-state">No recordings saved yet. Record one to drive the local pipeline.</li>';
   }
 
   return sessions
-    .map(
-      (session) => `
+    .map((session) => {
+      const busy = state.busySessionId === session.id;
+      const canProcess = !busy && session.pipeline.send !== 'completed';
+      return `
         <li class="session-card">
-          <div>
-            <p class="module-label">${session.audio.fileName}</p>
-            <p class="module-note">${formatSessionMeta(session)}</p>
+          <div class="session-main">
+            <div>
+              <p class="module-label">${session.audio.fileName}</p>
+              <p class="module-note">${formatSessionMeta(session)}</p>
+            </div>
+            <div class="session-pipeline">
+              <span class="module-status module-status--${session.pipeline.transcription}">transcription ${session.pipeline.transcription}</span>
+              <span class="module-status module-status--${session.pipeline.rewrite}">rewrite ${session.pipeline.rewrite}</span>
+              <span class="module-status module-status--${session.pipeline.send}">send ${session.pipeline.send}</span>
+            </div>
+            ${session.transcript ? `<div class="result-block"><span class="result-label">Transcript</span><p>${session.transcript.text}</p></div>` : ''}
+            ${session.rewrite ? `<div class="result-block"><span class="result-label">Rewritten</span><p>${session.rewrite.text}</p></div>` : ''}
+            ${session.delivery ? `<div class="result-block"><span class="result-label">Delivered</span><p>${session.delivery.deliveredText}</p></div>` : ''}
+            ${session.error ? `<div class="result-block result-block--error"><span class="result-label">Error</span><p>${session.error}</p></div>` : ''}
           </div>
-          <div class="session-pipeline">
-            <span class="module-status module-status--${session.pipeline.transcription}">transcription ${session.pipeline.transcription}</span>
-            <span class="module-status module-status--${session.pipeline.rewrite}">rewrite ${session.pipeline.rewrite}</span>
+          <div class="session-actions">
+            <button class="ghost-button" data-process-session="${session.id}" ${canProcess ? '' : 'disabled'}>
+              ${busy ? 'Processing...' : session.pipeline.send === 'completed' ? 'Sent' : 'Run full local pipeline'}
+            </button>
+          </div>
+        </li>
+      `;
+    })
+    .join('');
+}
+
+function outboxMarkup(sentMessages: SentMessage[]): string {
+  if (sentMessages.length === 0) {
+    return '<li class="empty-state">No simulated messages have been delivered yet.</li>';
+  }
+
+  return sentMessages
+    .map(
+      (message) => `
+        <li class="session-card">
+          <div class="session-main">
+            <p class="module-label">${message.text}</p>
+            <p class="module-note">${new Date(message.deliveredAt).toLocaleString()} • ${message.channel} • session ${message.sessionId}</p>
           </div>
         </li>
       `
@@ -76,8 +115,9 @@ function formatDuration(durationMs: number | null): string {
 function formatSessionMeta(session: DictationSession): string {
   const createdAt = new Date(session.createdAt).toLocaleString();
   const kilobytes = (session.audio.bytes / 1024).toFixed(1);
+  const normalized = session.audio.normalizedRelativePath ? ` • normalized ${session.audio.normalizedRelativePath}` : '';
 
-  return `${createdAt} • ${formatDuration(session.durationMs)} • ${kilobytes} KB • ${session.audio.relativePath}`;
+  return `${createdAt} • ${formatDuration(session.durationMs)} • ${kilobytes} KB • ${session.audio.relativePath}${normalized}`;
 }
 
 function render(): void {
@@ -90,10 +130,10 @@ function render(): void {
     <main class="shell">
       <section class="hero">
         <p class="eyebrow">Desktop-first open source AI dictation</p>
-        <h1>${state.info.appName} desktop shell</h1>
+        <h1>${state.info.appName} local AI shell</h1>
         <p class="lead">
-          The raw-audio pipeline is now live: record from the microphone, persist the source file,
-          and enqueue the transcript and rewrite stages for future model integration.
+          Record from the microphone, persist the source audio, normalize it locally, transcribe it with Whisper,
+          rewrite it with a local open-source LLM, and simulate the final send.
         </p>
         <div class="meta-row">
           <div class="meta-card">
@@ -104,6 +144,10 @@ function render(): void {
             <span class="meta-label">Saved sessions</span>
             <strong>${state.sessions.length}</strong>
           </div>
+          <div class="meta-card">
+            <span class="meta-label">Simulated sends</span>
+            <strong>${state.sentMessages.length}</strong>
+          </div>
         </div>
       </section>
 
@@ -111,14 +155,14 @@ function render(): void {
         <div class="panel-header">
           <div>
             <p class="eyebrow">Local dictation pipeline</p>
-            <h2>Capture -> store -> queue models</h2>
+            <h2>Capture -> transcribe -> rewrite -> simulate send</h2>
           </div>
         </div>
         <p class="status-banner">${state.statusMessage}</p>
         <div class="button-row">
           <button id="start-recording" class="action-button" ${state.isRecording ? 'disabled' : ''}>Start recording</button>
           <button id="stop-recording" class="action-button action-button--secondary" ${state.isRecording ? '' : 'disabled'}>Stop and save</button>
-          <button id="refresh-sessions" class="ghost-button">Refresh sessions</button>
+          <button id="refresh-sessions" class="ghost-button" ${state.isRefreshing ? 'disabled' : ''}>Refresh data</button>
         </div>
       </section>
 
@@ -141,6 +185,16 @@ function render(): void {
         </div>
         <ul class="session-list">${sessionMarkup(state.sessions)}</ul>
       </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Simulated delivery</p>
+            <h2>Outbox</h2>
+          </div>
+        </div>
+        <ul class="session-list">${outboxMarkup(state.sentMessages)}</ul>
+      </section>
     </main>
   `;
 
@@ -155,13 +209,48 @@ function bindUi(): void {
     void stopRecording();
   });
   document.getElementById('refresh-sessions')?.addEventListener('click', () => {
-    void refreshSessions();
+    void refreshAll();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-process-session]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const sessionId = button.dataset.processSession;
+      if (sessionId) {
+        void processSession(sessionId);
+      }
+    });
   });
 }
 
-async function refreshSessions(): Promise<void> {
-  state.sessions = await window.opentypeless.listDictationSessions();
+async function refreshAll(): Promise<void> {
+  state.isRefreshing = true;
   render();
+  const [sessions, sentMessages] = await Promise.all([
+    window.opentypeless.listDictationSessions(),
+    window.opentypeless.listSentMessages()
+  ]);
+  state.sessions = sessions;
+  state.sentMessages = sentMessages;
+  state.isRefreshing = false;
+  render();
+}
+
+async function processSession(sessionId: string): Promise<void> {
+  state.busySessionId = sessionId;
+  state.statusMessage = 'Running local transcription, rewrite, and simulated send...';
+  render();
+
+  try {
+    const processed = await window.opentypeless.processDictationSession(sessionId);
+    state.sessions = state.sessions.map((session) => (session.id === processed.id ? processed : session));
+    state.sentMessages = await window.opentypeless.listSentMessages();
+    state.statusMessage = `Completed local pipeline for ${processed.audio.fileName}.`;
+  } catch (error) {
+    state.statusMessage = `Pipeline failed: ${errorMessage(error)}`;
+  } finally {
+    state.busySessionId = null;
+    render();
+  }
 }
 
 async function startRecording(): Promise<void> {
@@ -229,7 +318,7 @@ async function finalizeRecording(chunks: Blob[], mimeType: string): Promise<void
     state.recorder = null;
     state.recordingStartedAt = null;
     state.sessions = [saved, ...state.sessions];
-    state.statusMessage = `Saved ${saved.audio.fileName}. The transcription and rewrite stages are queued as pending.`;
+    state.statusMessage = `Saved ${saved.audio.fileName}. Run the full local pipeline when you are ready.`;
     render();
   } catch (error) {
     stopStream();
@@ -256,12 +345,14 @@ function errorMessage(error: unknown): string {
 }
 
 async function boot(): Promise<void> {
-  const [info, sessions] = await Promise.all([
+  const [info, sessions, sentMessages] = await Promise.all([
     window.opentypeless.getRuntimeInfo(),
-    window.opentypeless.listDictationSessions()
+    window.opentypeless.listDictationSessions(),
+    window.opentypeless.listSentMessages()
   ]);
   state.info = info;
   state.sessions = sessions;
+  state.sentMessages = sentMessages;
   render();
 }
 
