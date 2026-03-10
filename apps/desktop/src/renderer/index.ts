@@ -1,9 +1,10 @@
 import './styles.css';
 
-import type { DictationSession, RuntimeInfo, SentMessage } from '../shared/ipc';
+import type { CompleteDictationResult, DesktopAttentionEvent, DesktopPermissionKind, DesktopStatus, DictationSession, RecordingCommand, RuntimeInfo, SentMessage } from '../shared/ipc';
 
 interface AppState {
   info: RuntimeInfo;
+  desktop: DesktopStatus;
   isRecording: boolean;
   isRefreshing: boolean;
   busySessionId: string | null;
@@ -17,6 +18,7 @@ interface AppState {
 
 const state: AppState = {
   info: null as unknown as RuntimeInfo,
+  desktop: null as unknown as DesktopStatus,
   isRecording: false,
   isRefreshing: false,
   busySessionId: null,
@@ -24,9 +26,72 @@ const state: AppState = {
   recordingStartedAt: null,
   sessions: [],
   sentMessages: [],
-  statusMessage: 'Ready to capture microphone audio, transcribe it locally, rewrite it locally, and simulate a send.',
+  statusMessage: 'Grant permissions, then press the global shortcut to dictate into the app currently under your cursor.',
   stream: null
 };
+
+function isPermissionGranted(kind: DesktopPermissionKind): boolean {
+  return state.desktop.permissions[kind] === 'granted';
+}
+
+function permissionTone(kind: DesktopPermissionKind): 'ready' | 'blocked' {
+  return isPermissionGranted(kind) ? 'ready' : 'blocked';
+}
+
+function permissionStepCopy(kind: DesktopPermissionKind): string {
+  if (kind === 'microphone') {
+    return isPermissionGranted('microphone')
+      ? 'Microphone access is ready. OpenTypeless can capture speech when you start dictation.'
+      : 'OpenTypeless needs microphone access to capture speech as soon as the shortcut starts recording.';
+  }
+
+  return isPermissionGranted('accessibility')
+    ? 'Accessibility access is ready. OpenTypeless can paste the cleaned text back into the target app.'
+    : 'Accessibility access lets OpenTypeless activate the target app and paste the rewritten text for you.';
+}
+
+function setupGuideMarkup(): string {
+  const steps = [
+    {
+      title: 'Grant microphone access',
+      detail: isPermissionGranted('microphone')
+        ? 'Done. Recording can start immediately.'
+        : 'Click Request, accept the macOS prompt, then come back here.'
+    },
+    {
+      title: 'Allow Accessibility',
+      detail: isPermissionGranted('accessibility')
+        ? 'Done. Automatic paste is available.'
+        : 'Click Request. If macOS sends you to System Settings, enable OpenTypeless under Accessibility.'
+    },
+    {
+      title: 'Dictate in any app',
+      detail: `Focus the app where you want text to land, press ${state.desktop.shortcuts.startRecording}, then stop with ${state.desktop.shortcuts.stopRecording}.`
+    }
+  ];
+
+  return `
+    <div class="setup-guide">
+      <div>
+        <span class="meta-label">Recommended flow</span>
+        <h3>Get to first successful dictation</h3>
+      </div>
+      <ol class="setup-steps">
+        ${steps
+          .map((step, index) => `
+            <li class="setup-step">
+              <span class="setup-step-index">0${index + 1}</span>
+              <div>
+                <p class="module-label">${step.title}</p>
+                <p class="module-note">${step.detail}</p>
+              </div>
+            </li>
+          `)
+          .join('')}
+      </ol>
+    </div>
+  `;
+}
 
 function moduleMarkup(info: RuntimeInfo): string {
   return info.modules
@@ -44,9 +109,54 @@ function moduleMarkup(info: RuntimeInfo): string {
     .join('');
 }
 
+function permissionMarkup(): string {
+  return `
+    <div class="permission-grid">
+      <div class="permission-card permission-card--${permissionTone('microphone')}">
+        <div>
+          <span class="meta-label">Microphone</span>
+          <strong>${state.desktop.permissions.microphone}</strong>
+          <p class="module-note">${permissionStepCopy('microphone')}</p>
+        </div>
+        <div class="permission-actions">
+          <button id="request-microphone" class="ghost-button" ${isPermissionGranted('microphone') ? 'disabled' : ''}>${isPermissionGranted('microphone') ? 'Granted' : 'Request'}</button>
+          <button id="open-microphone-settings" class="ghost-button">Open settings</button>
+        </div>
+      </div>
+      <div class="permission-card permission-card--${permissionTone('accessibility')}">
+        <div>
+          <span class="meta-label">Accessibility</span>
+          <strong>${state.desktop.permissions.accessibility}</strong>
+          <p class="module-note">${permissionStepCopy('accessibility')}</p>
+        </div>
+        <div class="permission-actions">
+          <button id="request-accessibility" class="ghost-button" ${isPermissionGranted('accessibility') ? 'disabled' : ''}>${isPermissionGranted('accessibility') ? 'Granted' : 'Request'}</button>
+          <button id="open-accessibility-settings" class="ghost-button">Open settings</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function shortcutMarkup(): string {
+  const target = state.desktop.activeTargetAppName ? `Target app: ${state.desktop.activeTargetAppName}` : 'No external target app captured yet.';
+  return `
+    <div class="shortcut-card">
+      <div>
+        <span class="meta-label">Global shortcuts</span>
+        <div class="shortcut-stack">
+          <strong>Start: ${state.desktop.shortcuts.startRecording}</strong>
+          <strong>Stop: ${state.desktop.shortcuts.stopRecording}</strong>
+        </div>
+      </div>
+      <p class="module-note">${target}</p>
+    </div>
+  `;
+}
+
 function sessionMarkup(sessions: DictationSession[]): string {
   if (sessions.length === 0) {
-    return '<li class="empty-state">No recordings saved yet. Record one to drive the local pipeline.</li>';
+    return '<li class="empty-state">No recordings saved yet. Use the global shortcut or the local controls below.</li>';
   }
 
   return sessions
@@ -72,7 +182,7 @@ function sessionMarkup(sessions: DictationSession[]): string {
           </div>
           <div class="session-actions">
             <button class="ghost-button" data-process-session="${session.id}" ${canProcess ? '' : 'disabled'}>
-              ${busy ? 'Processing...' : session.pipeline.send === 'completed' ? 'Sent' : 'Run full local pipeline'}
+              ${busy ? 'Processing...' : session.pipeline.send === 'completed' ? 'Sent' : 'Run local pipeline'}
             </button>
           </div>
         </li>
@@ -130,10 +240,10 @@ function render(): void {
     <main class="shell">
       <section class="hero">
         <p class="eyebrow">Desktop-first open source AI dictation</p>
-        <h1>${state.info.appName} local AI shell</h1>
+        <h1>${state.info.appName} desktop workflow</h1>
         <p class="lead">
-          Record from the microphone, persist the source audio, normalize it locally, transcribe it with Whisper,
-          rewrite it with a local open-source LLM, and simulate the final send.
+          Give the app microphone and accessibility permission, then use the global shortcuts to start and stop dictation.
+          OpenTypeless records, transcribes, rewrites, and pastes the result back into the app that was focused when recording began.
         </p>
         <div class="meta-row">
           <div class="meta-card">
@@ -154,15 +264,18 @@ function render(): void {
       <section class="panel recorder-panel">
         <div class="panel-header">
           <div>
-            <p class="eyebrow">Local dictation pipeline</p>
-            <h2>Capture -> transcribe -> rewrite -> simulate send</h2>
+            <p class="eyebrow">Permissions and shortcuts</p>
+            <h2>Grant access, then dictate anywhere</h2>
           </div>
         </div>
         <p class="status-banner">${state.statusMessage}</p>
+        ${setupGuideMarkup()}
+        ${permissionMarkup()}
+        ${shortcutMarkup()}
         <div class="button-row">
-          <button id="start-recording" class="action-button" ${state.isRecording ? 'disabled' : ''}>Start recording</button>
-          <button id="stop-recording" class="action-button action-button--secondary" ${state.isRecording ? '' : 'disabled'}>Stop and save</button>
-          <button id="refresh-sessions" class="ghost-button" ${state.isRefreshing ? 'disabled' : ''}>Refresh data</button>
+          <button id="start-recording" class="action-button" ${state.isRecording ? 'disabled' : ''}>Start locally</button>
+          <button id="stop-recording" class="action-button action-button--secondary" ${state.isRecording ? '' : 'disabled'}>Stop locally</button>
+          <button id="refresh-data" class="ghost-button" ${state.isRefreshing ? 'disabled' : ''}>Refresh data</button>
         </div>
       </section>
 
@@ -203,13 +316,25 @@ function render(): void {
 
 function bindUi(): void {
   document.getElementById('start-recording')?.addEventListener('click', () => {
-    void startRecording();
+    void startRecording('manual');
   });
   document.getElementById('stop-recording')?.addEventListener('click', () => {
     void stopRecording();
   });
-  document.getElementById('refresh-sessions')?.addEventListener('click', () => {
+  document.getElementById('refresh-data')?.addEventListener('click', () => {
     void refreshAll();
+  });
+  document.getElementById('request-microphone')?.addEventListener('click', () => {
+    void requestMicrophonePermission();
+  });
+  document.getElementById('request-accessibility')?.addEventListener('click', () => {
+    void requestAccessibilityPermission();
+  });
+  document.getElementById('open-microphone-settings')?.addEventListener('click', () => {
+    void openPermissionSettings('microphone');
+  });
+  document.getElementById('open-accessibility-settings')?.addEventListener('click', () => {
+    void openPermissionSettings('accessibility');
   });
 
   document.querySelectorAll<HTMLButtonElement>('[data-process-session]').forEach((button) => {
@@ -225,13 +350,37 @@ function bindUi(): void {
 async function refreshAll(): Promise<void> {
   state.isRefreshing = true;
   render();
-  const [sessions, sentMessages] = await Promise.all([
+  const [desktop, sessions, sentMessages] = await Promise.all([
+    window.opentypeless.getDesktopStatus(),
     window.opentypeless.listDictationSessions(),
     window.opentypeless.listSentMessages()
   ]);
+  state.desktop = desktop;
   state.sessions = sessions;
   state.sentMessages = sentMessages;
   state.isRefreshing = false;
+  render();
+}
+
+async function requestMicrophonePermission(): Promise<void> {
+  const granted = await window.opentypeless.requestMicrophonePermission();
+  state.statusMessage = granted
+    ? 'Microphone access granted. You can now start dictation.'
+    : 'Microphone access is still unavailable. Open System Settings if the prompt did not appear.';
+  await refreshAll();
+}
+
+async function requestAccessibilityPermission(): Promise<void> {
+  const granted = await window.opentypeless.requestAccessibilityPermission();
+  state.statusMessage = granted
+    ? 'Accessibility access granted. OpenTypeless can paste into the focused app.'
+    : 'Accessibility access is still unavailable. Open System Settings and allow OpenTypeless under Accessibility.';
+  await refreshAll();
+}
+
+async function openPermissionSettings(kind: 'microphone' | 'accessibility'): Promise<void> {
+  await window.opentypeless.openPermissionSettings(kind);
+  state.statusMessage = `Opened ${kind} settings. Grant access there, then return here and refresh.`;
   render();
 }
 
@@ -249,11 +398,11 @@ async function processSession(sessionId: string): Promise<void> {
     state.statusMessage = `Pipeline failed: ${errorMessage(error)}`;
   } finally {
     state.busySessionId = null;
-    render();
+    await refreshAll();
   }
 }
 
-async function startRecording(): Promise<void> {
+async function startRecording(source: 'manual' | 'shortcut'): Promise<void> {
   if (state.isRecording) {
     return;
   }
@@ -285,7 +434,10 @@ async function startRecording(): Promise<void> {
     state.recorder = recorder;
     state.recordingStartedAt = Date.now();
     state.stream = stream;
-    state.statusMessage = 'Recording from the selected microphone. Stop to save the raw audio locally.';
+    state.statusMessage =
+      source === 'shortcut'
+        ? 'Global shortcut started recording. Speak into the app you were using, then press the stop shortcut.'
+        : 'Manual recording started. This is useful for local testing inside the app window.';
     render();
   } catch (error) {
     state.statusMessage = `Unable to access microphone: ${errorMessage(error)}`;
@@ -318,16 +470,34 @@ async function finalizeRecording(chunks: Blob[], mimeType: string): Promise<void
     state.recorder = null;
     state.recordingStartedAt = null;
     state.sessions = [saved, ...state.sessions];
-    state.statusMessage = `Saved ${saved.audio.fileName}. Run the full local pipeline when you are ready.`;
+    state.busySessionId = saved.id;
+    state.statusMessage = `Saved ${saved.audio.fileName}. Running transcription, rewrite, and paste...`;
     render();
+
+    const result = await window.opentypeless.completeDictationSession(saved.id);
+    applyCompletionResult(result);
   } catch (error) {
     stopStream();
     state.isRecording = false;
     state.recorder = null;
     state.recordingStartedAt = null;
+    state.busySessionId = null;
     state.statusMessage = `Recording failed: ${errorMessage(error)}`;
     render();
   }
+}
+
+function applyCompletionResult(result: CompleteDictationResult): void {
+  state.sessions = state.sessions.map((session) => (session.id === result.processed.id ? result.processed : session));
+  state.busySessionId = null;
+
+  if (result.inserted) {
+    state.statusMessage = `Inserted rewritten text into ${result.targetAppName ?? 'the focused app'}.`;
+  } else {
+    state.statusMessage = 'Processed the dictation, but there was no external target app available for insertion.';
+  }
+
+  void refreshAll();
 }
 
 function stopStream(): void {
@@ -344,15 +514,50 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function describeMissingPermissions(missing: DesktopPermissionKind[]): string {
+  if (missing.length === 2) {
+    return 'microphone and accessibility permissions';
+  }
+
+  return missing[0] === 'microphone' ? 'microphone permission' : 'accessibility permission';
+}
+
+async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<void> {
+  if (event.kind !== 'permission-required') {
+    return;
+  }
+
+  state.statusMessage = `OpenTypeless cannot start dictation yet. Please grant ${describeMissingPermissions(event.missing)} first.`;
+  await refreshAll();
+}
+
+async function handleRecordingCommand(command: RecordingCommand): Promise<void> {
+  if (command === 'start') {
+    await refreshAll();
+    await startRecording('shortcut');
+    return;
+  }
+
+  await stopRecording();
+}
+
 async function boot(): Promise<void> {
-  const [info, sessions, sentMessages] = await Promise.all([
+  const [info, desktop, sessions, sentMessages] = await Promise.all([
     window.opentypeless.getRuntimeInfo(),
+    window.opentypeless.getDesktopStatus(),
     window.opentypeless.listDictationSessions(),
     window.opentypeless.listSentMessages()
   ]);
   state.info = info;
+  state.desktop = desktop;
   state.sessions = sessions;
   state.sentMessages = sentMessages;
+  window.opentypeless.onRecordingCommand((command) => {
+    void handleRecordingCommand(command);
+  });
+  window.opentypeless.onDesktopAttention((event) => {
+    void handleDesktopAttention(event);
+  });
   render();
 }
 
