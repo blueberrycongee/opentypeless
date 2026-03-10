@@ -8,38 +8,44 @@ This workspace contains the first runnable Electron shell for OpenTypeless.
 - TypeScript
 - Webpack
 - secure preload bridge with typed IPC
+- local `whisper.cpp` speech-to-text
+- local `MLX-LM` rewrite model on Apple Silicon
 
 ## Current scope
 
-This skeleton intentionally stops short of model integration, but the local audio pipeline is live. It currently includes:
-- Electron main process bootstrapping
-- preload bridge setup
-- renderer entry with a simple architecture dashboard
+The desktop shell now supports a full local verification path:
 - microphone capture in the renderer via `MediaRecorder`
 - raw audio persistence and session manifests under the app data directory
-- pending pipeline states for transcription and rewrite
-- tested runtime-info and local dictation-pipeline seams
+- audio normalization with `ffmpeg`
+- local STT with `whisper.cpp`
+- local cleanup/rewrite with `MLX-LM`
+- simulated message delivery into a local outbox
+- tested runtime-info and dictation-pipeline seams
+- end-to-end verification with a generated local speech sample
 
-It does not yet include actual speech-to-text or rewrite models.
+System-wide insertion into arbitrary desktop apps is still pending.
 
 ## Commands
 
 From this directory:
 
 ```bash
-npm install
+npm run ai:setup
 npm run start
 npm run test
-npm run lint
 npm run typecheck
+npm run lint
+npm run verify:e2e
 ```
 
 ## Initial structure
 
 ```text
 src/main/                 Electron main process and desktop-only modules
+src/main/ai/              local STT and rewrite runtime adapters
 src/main/core/            app shell architecture seams and module state
 src/main/pipeline/        local dictation pipeline and audio/session storage
 src/renderer/             renderer entry, HTML, styles, and microphone capture UI
 src/shared/               IPC contracts shared across processes
+scripts/                  local AI setup and end-to-end verification helpers
 ```

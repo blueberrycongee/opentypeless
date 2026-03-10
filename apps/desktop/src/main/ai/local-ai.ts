@@ -13,8 +13,9 @@ export interface LocalAiConfig {
   ffmpegBin: string;
   whisperCliBin: string;
   whisperModelPath: string;
-  ollamaBin: string;
-  ollamaModel: string;
+  pythonBin: string;
+  rewriteScriptPath: string;
+  rewriteModel: string;
 }
 
 export function defaultLocalAiConfig(): LocalAiConfig {
@@ -24,8 +25,9 @@ export function defaultLocalAiConfig(): LocalAiConfig {
     whisperModelPath:
       process.env.OPENTYPELESS_WHISPER_MODEL ??
       join(homedir(), '.cache', 'opentypeless', 'models', 'whisper', 'ggml-base.en.bin'),
-    ollamaBin: process.env.OPENTYPELESS_OLLAMA_BIN ?? 'ollama',
-    ollamaModel: process.env.OPENTYPELESS_OLLAMA_MODEL ?? 'qwen2.5:0.5b'
+    pythonBin: process.env.OPENTYPELESS_PYTHON_BIN ?? join(process.cwd(), '.venv', 'bin', 'python'),
+    rewriteScriptPath: process.env.OPENTYPELESS_REWRITE_SCRIPT ?? join(process.cwd(), 'scripts', 'rewrite_with_mlx.py'),
+    rewriteModel: process.env.OPENTYPELESS_REWRITE_MODEL ?? 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
   };
 }
 
@@ -55,17 +57,11 @@ export function createLocalAiPipelineDeps(dataRoot: string, config: LocalAiConfi
         normalizedAudioPath
       ]);
 
-      await execFileAsync(config.whisperCliBin, [
-        '-m',
-        config.whisperModelPath,
-        '-l',
-        'en',
-        '-nt',
-        '-otxt',
-        '-of',
-        outputPrefix,
-        normalizedAudioPath
-      ], { maxBuffer: 16 * 1024 * 1024 });
+      await execFileAsync(
+        config.whisperCliBin,
+        ['-m', config.whisperModelPath, '-l', 'en', '-nt', '-otxt', '-of', outputPrefix, normalizedAudioPath],
+        { maxBuffer: 16 * 1024 * 1024 }
+      );
 
       const transcriptPath = `${outputPrefix}.txt`;
       const transcript = normalizeWhisperText(await readFile(transcriptPath, 'utf8'));
@@ -80,27 +76,15 @@ export function createLocalAiPipelineDeps(dataRoot: string, config: LocalAiConfi
     rewriteTranscript: async (transcript) => {
       await ensureLocalAiReady(config);
 
-      const prompt = [
-        'You rewrite raw spoken dictation into a send-ready chat message.',
-        'Keep the original meaning.',
-        'Remove filler words and repeated phrases.',
-        'Add punctuation and capitalization.',
-        'Do not add new facts.',
-        'Return only the final message.',
-        '',
-        'Raw dictation:',
-        transcript
-      ].join('\n');
-
       const { stdout } = await execFileAsync(
-        config.ollamaBin,
-        ['run', config.ollamaModel, prompt],
+        config.pythonBin,
+        [config.rewriteScriptPath, '--model', config.rewriteModel, '--text', transcript],
         { maxBuffer: 16 * 1024 * 1024 }
       );
 
       return {
-        text: normalizeOllamaText(stdout),
-        model: `ollama:${config.ollamaModel}`
+        text: normalizeRewriteText(stdout),
+        model: `mlx-lm:${config.rewriteModel}`
       };
     },
 
@@ -116,15 +100,10 @@ export async function ensureLocalAiReady(config: LocalAiConfig = defaultLocalAiC
   await Promise.all([
     ensureExecutable(config.ffmpegBin, ['-version'], 'ffmpeg is required. Run `npm run ai:setup` in apps/desktop.'),
     ensureExecutable(config.whisperCliBin, ['--help'], 'whisper.cpp is required. Run `npm run ai:setup` in apps/desktop.'),
-    ensureExecutable(config.ollamaBin, ['--version'], 'Ollama is required. Run `npm run ai:setup` in apps/desktop.'),
-    ensureFile(config.whisperModelPath, `Whisper model missing at ${config.whisperModelPath}. Run \`npm run ai:setup\` in apps/desktop.`)
+    ensureExecutable(config.pythonBin, ['--version'], 'Local Python runtime is required. Run `npm run ai:setup` in apps/desktop.'),
+    ensureFile(config.whisperModelPath, `Whisper model missing at ${config.whisperModelPath}. Run \`npm run ai:setup\` in apps/desktop.`),
+    ensureFile(config.rewriteScriptPath, `Rewrite script missing at ${config.rewriteScriptPath}.`)
   ]);
-
-  try {
-    await execFileAsync(config.ollamaBin, ['show', config.ollamaModel], { maxBuffer: 1024 * 1024 });
-  } catch {
-    throw new Error(`Ollama model ${config.ollamaModel} is not available. Run \`npm run ai:setup\` in apps/desktop.`);
-  }
 }
 
 async function ensureExecutable(bin: string, args: string[], message: string): Promise<void> {
@@ -150,6 +129,6 @@ function normalizeWhisperText(text: string): string {
     .trim();
 }
 
-function normalizeOllamaText(text: string): string {
+function normalizeRewriteText(text: string): string {
   return text.trim().replace(/^"|"$/g, '');
 }

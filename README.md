@@ -42,12 +42,12 @@ OpenTypeless aims to explore a third path:
 
 ## Current status
 
-This repository now includes an initial runnable Electron desktop shell, but the core dictation workflow is still under active construction.
-The repository currently contains:
+This repository now includes an initial runnable Electron desktop shell and a fully local macOS-first AI pipeline for capture, transcription, rewrite, and simulated send. The repository currently contains:
 - product definition notes
 - competitor research
 - initial architecture framing
-- an initial Electron desktop shell under `apps/desktop/`
+- an Electron desktop shell under `apps/desktop/`
+- a local STT + rewrite pipeline using `whisper.cpp` and `MLX-LM`
 - GitHub community and contribution files
 
 ## Initial feature benchmark

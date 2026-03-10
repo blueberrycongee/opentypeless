@@ -23,7 +23,7 @@ export const plannedModules: RuntimeModule[] = [
     id: 'rewrite',
     label: 'Rewrite',
     status: 'ready',
-    note: 'A local Ollama-hosted open-source model cleans transcripts into send-ready messages.'
+    note: 'A local MLX-hosted open-source model cleans transcripts into send-ready messages on Apple Silicon.'
   },
   {
     id: 'insertion',
