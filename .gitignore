@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+coverage/
+.cache/
+.tmp/
+tmp/
+
+# Rust / Tauri
+Cargo.lock
+target/
+
+# Electron
+release/
+
+# Testing
+playwright-report/
+test-results/
+
+# Misc
+*.pid
+*.seed

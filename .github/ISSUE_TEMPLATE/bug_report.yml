@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a broken behavior or regression.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly and include expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest reliable reproduction steps.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, app version, device, and any relevant setup details.
