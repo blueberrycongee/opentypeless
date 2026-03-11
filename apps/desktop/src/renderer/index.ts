@@ -1,5 +1,7 @@
 import './styles.css';
 
+import { changeLanguage, getLocale, onLanguageChanged, type Locale } from './i18n';
+import { t } from './i18n';
 import { icons } from './icons';
 import type {
   CompleteDictationResult,
@@ -117,9 +119,9 @@ function pipelineBadge(label: string, status: PipelineStageStatus): string {
 }
 
 function moduleStatusBadge(status: string): string {
-  if (status === 'ready') return '<span class="badge badge-green">ready</span>';
-  if (status === 'blocked') return '<span class="badge badge-red">blocked</span>';
-  return '<span class="badge badge-neutral">planned</span>';
+  if (status === 'ready') return `<span class="badge badge-green">${t('badge.ready')}</span>`;
+  if (status === 'blocked') return `<span class="badge badge-red">${t('badge.blocked')}</span>`;
+  return `<span class="badge badge-neutral">${t('badge.planned')}</span>`;
 }
 
 function setStatus(text: string, tone: StatusTone): void {
@@ -153,13 +155,13 @@ function renderSidebar(): string {
         <span class="sidebar-brand-name">OpenTypeless</span>
       </div>
       <nav class="sidebar-nav">
-        ${nav('home', icons.home, 'Home')}
-        ${nav('history', icons.clock, 'History')}
-        ${nav('dictionary', icons.book, 'Dictionary')}
-        ${nav('settings', icons.sliders, 'Settings')}
+        ${nav('home', icons.home, t('nav.home'))}
+        ${nav('history', icons.clock, t('nav.history'))}
+        ${nav('dictionary', icons.book, t('nav.dictionary'))}
+        ${nav('settings', icons.sliders, t('nav.settings'))}
       </nav>
       <div class="sidebar-footer">
-        <span class="sidebar-footer-text">v0.1.0 · ${state.info.platform}</span>
+        <span class="sidebar-footer-text">${t('sidebar.footer', { platform: state.info.platform })}</span>
       </div>
     </aside>
   `;
@@ -178,10 +180,10 @@ function renderHome(): string {
     <div class="perm-alert">
       ${icons.alertCircle}
       <div class="perm-alert-text">
-        <p class="perm-alert-title">Permissions required</p>
-        <p class="perm-alert-desc">Grant microphone and accessibility access to enable dictation into any app.</p>
+        <p class="perm-alert-title">${t('home.permissionsTitle')}</p>
+        <p class="perm-alert-desc">${t('home.permissionsDesc')}</p>
         <div class="btn-row">
-          <button class="btn btn-secondary btn-sm" data-nav="settings">Open Settings</button>
+          <button class="btn btn-secondary btn-sm" data-nav="settings">${t('home.openSettings')}</button>
         </div>
       </div>
     </div>
@@ -192,27 +194,27 @@ function renderHome(): string {
     recCard = `
     <div class="rec-card rec-card--active">
       <div class="rec-icon rec-icon--active">${icons.micLarge}</div>
-      <p class="rec-title">Recording in progress</p>
-      <p class="rec-hint">Use the floating overlay or press ${shortcutKeys(state.desktop.shortcuts.startRecording)} to stop.</p>
+      <p class="rec-title">${t('home.recordingInProgress')}</p>
+      <p class="rec-hint">${t('home.recordingOverlayHint', { shortcut: shortcutKeys(state.desktop.shortcuts.startRecording) })}</p>
     </div>
     `;
   } else if (state.isRecording) {
     recCard = `
     <div class="rec-card rec-card--active">
       <div class="rec-icon rec-icon--active">${icons.micLarge}</div>
-      <p class="rec-title">Recording...</p>
-      <p class="rec-hint">Speak naturally. Your words will be transcribed and cleaned by AI.</p>
+      <p class="rec-title">${t('home.recordingActive')}</p>
+      <p class="rec-hint">${t('home.recordingHint')}</p>
       <p class="rec-timer" id="recording-timer">${formatElapsed(state.recordingElapsed)}</p>
-      <button class="btn btn-danger" data-action="stop-recording">${icons.stop} Stop recording</button>
+      <button class="btn btn-danger" data-action="stop-recording">${icons.stop} ${t('home.stopRecording')}</button>
     </div>
     `;
   } else {
     recCard = `
     <div class="rec-card">
       <div class="rec-icon rec-icon--idle">${icons.micLarge}</div>
-      <p class="rec-title">Ready to dictate</p>
-      <p class="rec-hint">Press ${shortcutKeys(state.desktop.shortcuts.startRecording)} from any app, or start here.</p>
-      <button class="btn btn-primary" data-action="start-recording">${icons.mic} Start recording</button>
+      <p class="rec-title">${t('home.readyToDictate')}</p>
+      <p class="rec-hint">${t('home.recordingStartHint', { shortcut: shortcutKeys(state.desktop.shortcuts.startRecording) })}</p>
+      <button class="btn btn-primary" data-action="start-recording">${icons.mic} ${t('home.startRecording')}</button>
     </div>
     `;
   }
@@ -221,15 +223,15 @@ function renderHome(): string {
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-value">${state.sessions.length}</div>
-        <div class="stat-label">Sessions</div>
+        <div class="stat-label">${t('home.statsSessions')}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">${state.sentMessages.length}</div>
-        <div class="stat-label">Delivered</div>
+        <div class="stat-label">${t('home.statsDelivered')}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">${state.desktop.activeTargetAppName ?? '—'}</div>
-        <div class="stat-label">Target app</div>
+        <div class="stat-label">${t('home.statsTargetApp')}</div>
       </div>
     </div>
   `;
@@ -239,8 +241,8 @@ function renderHome(): string {
       ? `
     <div class="section">
       <div class="section-header">
-        <span class="section-title">Recent sessions</span>
-        <button class="btn btn-ghost btn-sm" data-nav="history">View all ${icons.chevronRight}</button>
+        <span class="section-title">${t('home.recentSessions')}</span>
+        <button class="btn btn-ghost btn-sm" data-nav="history">${t('home.viewAll')} ${icons.chevronRight}</button>
       </div>
       <div class="card">
         ${state.sessions.slice(0, 5).map(renderSessionItem).join('')}
@@ -251,8 +253,8 @@ function renderHome(): string {
 
   return `
     <div class="page-header">
-      <h1 class="page-title">Home</h1>
-      <p class="page-subtitle">Desktop AI dictation, ready when you are.</p>
+      <h1 class="page-title">${t('home.title')}</h1>
+      <p class="page-subtitle">${t('home.subtitle')}</p>
     </div>
     ${statusBanner}
     ${permAlert}
@@ -270,16 +272,19 @@ function renderHistory(): string {
       ? `
     <div class="empty">
       <div class="empty-icon">${icons.clock}</div>
-      <p class="empty-title">No sessions yet</p>
-      <p class="empty-desc">Record your first dictation from the Home tab. Sessions will appear here with full transcripts and pipeline details.</p>
+      <p class="empty-title">${t('history.emptyTitle')}</p>
+      <p class="empty-desc">${t('history.emptyDesc')}</p>
     </div>
   `
       : `<div class="card">${state.sessions.map(renderSessionItem).join('')}</div>`;
 
+  const count = state.sessions.length;
+  const subtitleKey = count === 1 ? 'history.subtitle_one' : 'history.subtitle_other';
+
   return `
     <div class="page-header">
-      <h1 class="page-title">History</h1>
-      <p class="page-subtitle">${state.sessions.length} session${state.sessions.length === 1 ? '' : 's'} recorded</p>
+      <h1 class="page-title">${t('history.title')}</h1>
+      <p class="page-subtitle">${t(subtitleKey, { count })}</p>
     </div>
     ${body}
   `;
@@ -290,14 +295,14 @@ function renderHistory(): string {
 function renderDictionary(): string {
   return `
     <div class="page-header">
-      <h1 class="page-title">Dictionary</h1>
-      <p class="page-subtitle">Custom words and phrases for better accuracy.</p>
+      <h1 class="page-title">${t('dictionary.title')}</h1>
+      <p class="page-subtitle">${t('dictionary.subtitle')}</p>
     </div>
     <div class="card">
       <div class="empty">
         <div class="empty-icon">${icons.book}</div>
-        <p class="empty-title">Personal dictionary</p>
-        <p class="empty-desc">Add specialized terms, abbreviations, and names to improve transcription accuracy. This feature is coming in a future update.</p>
+        <p class="empty-title">${t('dictionary.emptyTitle')}</p>
+        <p class="empty-desc">${t('dictionary.emptyDesc')}</p>
       </div>
     </div>
   `;
@@ -308,35 +313,52 @@ function renderDictionary(): string {
 function renderSettings(): string {
   const micStatus = permissionGranted('microphone');
   const accStatus = permissionGranted('accessibility');
+  const currentLocale = getLocale();
 
   return `
     <div class="page-header">
-      <h1 class="page-title">Settings</h1>
-      <p class="page-subtitle">Permissions, shortcuts, and system configuration.</p>
+      <h1 class="page-title">${t('settings.title')}</h1>
+      <p class="page-subtitle">${t('settings.subtitle')}</p>
     </div>
 
     <div class="settings-group">
-      <h3 class="settings-group-title">Permissions</h3>
+      <h3 class="settings-group-title">${t('settings.language')}</h3>
       <div class="card">
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">${icons.mic} Microphone</p>
-            <p class="settings-row-desc">Record speech for transcription</p>
+            <p class="settings-row-label">${t('settings.language')}</p>
+            <p class="settings-row-desc">${t('settings.languageDesc')}</p>
           </div>
           <div class="btn-row">
-            <span class="badge ${micStatus ? 'badge-green' : 'badge-red'}">${micStatus ? 'granted' : 'denied'}</span>
-            <button class="btn btn-secondary btn-sm" data-action="request-microphone" ${micStatus ? 'disabled' : ''}>Grant</button>
+            <button class="btn btn-secondary btn-sm ${currentLocale === 'en' ? 'btn-primary' : ''}" data-action="set-locale" data-locale="en">English</button>
+            <button class="btn btn-secondary btn-sm ${currentLocale === 'zh-CN' ? 'btn-primary' : ''}" data-action="set-locale" data-locale="zh-CN">中文</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3 class="settings-group-title">${t('settings.permissions')}</h3>
+      <div class="card">
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <p class="settings-row-label">${icons.mic} ${t('settings.microphone')}</p>
+            <p class="settings-row-desc">${t('settings.microphoneDesc')}</p>
+          </div>
+          <div class="btn-row">
+            <span class="badge ${micStatus ? 'badge-green' : 'badge-red'}">${micStatus ? t('settings.granted') : t('settings.denied')}</span>
+            <button class="btn btn-secondary btn-sm" data-action="request-microphone" ${micStatus ? 'disabled' : ''}>${t('settings.grant')}</button>
             <button class="btn btn-ghost btn-sm" data-action="open-microphone-settings">${icons.externalLink}</button>
           </div>
         </div>
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">${icons.shield} Accessibility</p>
-            <p class="settings-row-desc">Paste text into other applications</p>
+            <p class="settings-row-label">${icons.shield} ${t('settings.accessibility')}</p>
+            <p class="settings-row-desc">${t('settings.accessibilityDesc')}</p>
           </div>
           <div class="btn-row">
-            <span class="badge ${accStatus ? 'badge-green' : 'badge-red'}">${accStatus ? 'granted' : 'denied'}</span>
-            <button class="btn btn-secondary btn-sm" data-action="request-accessibility" ${accStatus ? 'disabled' : ''}>Grant</button>
+            <span class="badge ${accStatus ? 'badge-green' : 'badge-red'}">${accStatus ? t('settings.granted') : t('settings.denied')}</span>
+            <button class="btn btn-secondary btn-sm" data-action="request-accessibility" ${accStatus ? 'disabled' : ''}>${t('settings.grant')}</button>
             <button class="btn btn-ghost btn-sm" data-action="open-accessibility-settings">${icons.externalLink}</button>
           </div>
         </div>
@@ -344,17 +366,17 @@ function renderSettings(): string {
     </div>
 
     <div class="settings-group">
-      <h3 class="settings-group-title">Shortcuts</h3>
+      <h3 class="settings-group-title">${t('settings.shortcuts')}</h3>
       <div class="card">
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">Start recording</p>
+            <p class="settings-row-label">${t('settings.startRecording')}</p>
           </div>
           <div>${shortcutKeys(state.desktop.shortcuts.startRecording)}</div>
         </div>
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">Stop recording</p>
+            <p class="settings-row-label">${t('settings.stopRecording')}</p>
           </div>
           <div>${shortcutKeys(state.desktop.shortcuts.stopRecording)}</div>
         </div>
@@ -362,31 +384,31 @@ function renderSettings(): string {
     </div>
 
     <div class="settings-group">
-      <h3 class="settings-group-title">AI engine</h3>
+      <h3 class="settings-group-title">${t('settings.aiEngine')}</h3>
       <div class="card">
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">Speech-to-text</p>
+            <p class="settings-row-label">${t('settings.speechToText')}</p>
           </div>
-          <span class="settings-row-value">whisper.cpp (local)</span>
+          <span class="settings-row-value">${t('settings.whisperLocal')}</span>
         </div>
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">Text rewrite</p>
+            <p class="settings-row-label">${t('settings.textRewrite')}</p>
           </div>
-          <span class="settings-row-value">MLX-LM (local)</span>
+          <span class="settings-row-value">${t('settings.mlxLocal')}</span>
         </div>
         <div class="settings-row">
           <div class="settings-row-info">
-            <p class="settings-row-label">Text delivery</p>
+            <p class="settings-row-label">${t('settings.textDelivery')}</p>
           </div>
-          <span class="settings-row-value">Clipboard paste</span>
+          <span class="settings-row-value">${t('settings.clipboardPaste')}</span>
         </div>
       </div>
     </div>
 
     <div class="settings-group">
-      <h3 class="settings-group-title">System modules</h3>
+      <h3 class="settings-group-title">${t('settings.systemModules')}</h3>
       ${state.info.modules
         .map(
           (m) => `
@@ -403,18 +425,18 @@ function renderSettings(): string {
     </div>
 
     <div class="settings-group">
-      <h3 class="settings-group-title">About</h3>
+      <h3 class="settings-group-title">${t('settings.about')}</h3>
       <div class="card">
         <div class="settings-row">
-          <div class="settings-row-info"><p class="settings-row-label">Application</p></div>
+          <div class="settings-row-info"><p class="settings-row-label">${t('settings.application')}</p></div>
           <span class="settings-row-value">${escapeHtml(state.info.appName)} v0.1.0</span>
         </div>
         <div class="settings-row">
-          <div class="settings-row-info"><p class="settings-row-label">Platform</p></div>
+          <div class="settings-row-info"><p class="settings-row-label">${t('settings.platform')}</p></div>
           <span class="settings-row-value">${state.info.platform}</span>
         </div>
         <div class="settings-row">
-          <div class="settings-row-info"><p class="settings-row-label">License</p></div>
+          <div class="settings-row-info"><p class="settings-row-label">${t('settings.license')}</p></div>
           <span class="settings-row-value">MIT</span>
         </div>
       </div>
@@ -430,12 +452,14 @@ function renderSessionItem(session: DictationSession): string {
   const canProcess = !isBusy && !isComplete;
 
   const transcript = session.transcript
-    ? `<div class="session-result"><span class="session-result-label">Transcript</span>${escapeHtml(session.transcript.text)}</div>`
+    ? `<div class="session-result"><span class="session-result-label">${t('session.transcript')}</span>${escapeHtml(session.transcript.text)}</div>`
     : '';
   const rewrite = session.rewrite
-    ? `<div class="session-result"><span class="session-result-label">Rewritten</span>${escapeHtml(session.rewrite.text)}</div>`
+    ? `<div class="session-result"><span class="session-result-label">${t('session.rewritten')}</span>${escapeHtml(session.rewrite.text)}</div>`
     : '';
   const error = session.error ? `<p class="session-error">${escapeHtml(session.error)}</p>` : '';
+
+  const btnLabel = isBusy ? t('session.processing') : isComplete ? t('session.done') : t('session.runPipeline');
 
   return `
     <div class="session-item">
@@ -453,7 +477,7 @@ function renderSessionItem(session: DictationSession): string {
       </div>
       <div class="session-actions">
         <button class="btn btn-secondary btn-sm" data-action="process-session" data-session-id="${session.id}" ${canProcess ? '' : 'disabled'}>
-          ${isBusy ? 'Processing...' : isComplete ? 'Done' : 'Run pipeline'}
+          ${btnLabel}
         </button>
       </div>
     </div>
@@ -522,6 +546,15 @@ function bindUi(): void {
       if (sessionId) void processSession(sessionId);
     });
   });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-action="set-locale"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const locale = btn.dataset.locale as Locale;
+      if (locale === 'en' || locale === 'zh-CN') {
+        void changeLanguage(locale).then(() => render());
+      }
+    });
+  });
 }
 
 // ── Timer ──────────────────────────────────────────────────────────
@@ -563,7 +596,7 @@ async function refreshAll(): Promise<void> {
 async function requestMicrophonePermission(): Promise<void> {
   const granted = await window.opentypeless.requestMicrophonePermission();
   setStatus(
-    granted ? 'Microphone access granted.' : 'Microphone access unavailable. Open System Settings to grant.',
+    granted ? t('status.microphoneGranted') : t('status.microphoneUnavailable'),
     granted ? 'success' : 'warning'
   );
   await refreshAll();
@@ -572,7 +605,7 @@ async function requestMicrophonePermission(): Promise<void> {
 async function requestAccessibilityPermission(): Promise<void> {
   const granted = await window.opentypeless.requestAccessibilityPermission();
   setStatus(
-    granted ? 'Accessibility access granted.' : 'Open System Settings and enable OpenTypeless under Accessibility.',
+    granted ? t('status.accessibilityGranted') : t('status.accessibilityUnavailable'),
     granted ? 'success' : 'warning'
   );
   await refreshAll();
@@ -580,22 +613,23 @@ async function requestAccessibilityPermission(): Promise<void> {
 
 async function openPermissionSettings(kind: DesktopPermissionKind): Promise<void> {
   await window.opentypeless.openPermissionSettings(kind);
-  setStatus(`Opened ${kind} settings. Grant access, then return here.`, 'info');
+  const kindKey = kind === 'microphone' ? 'settings.microphone' : 'settings.accessibility';
+  setStatus(t('status.openedSettings', { kind: t(kindKey) }), 'info');
   render();
 }
 
 async function processSession(sessionId: string): Promise<void> {
   state.busySessionId = sessionId;
-  setStatus('Running local pipeline...', 'info');
+  setStatus(t('status.runningPipeline'), 'info');
   render();
 
   try {
     const processed = await window.opentypeless.processDictationSession(sessionId);
     state.sessions = state.sessions.map((s) => (s.id === processed.id ? processed : s));
     state.sentMessages = await window.opentypeless.listSentMessages();
-    setStatus(`Pipeline completed for ${processed.audio.fileName}.`, 'success');
+    setStatus(t('status.pipelineCompleted', { fileName: processed.audio.fileName }), 'success');
   } catch (err) {
-    setStatus(`Pipeline failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    setStatus(t('status.pipelineFailed', { message: err instanceof Error ? err.message : String(err) }), 'error');
   } finally {
     state.busySessionId = null;
     render();
@@ -606,7 +640,7 @@ async function startRecording(source: 'manual' | 'shortcut'): Promise<void> {
   if (state.isRecording) return;
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    setStatus('This environment does not support microphone capture.', 'error');
+    setStatus(t('status.noMicrophone'), 'error');
     render();
     return;
   }
@@ -634,13 +668,13 @@ async function startRecording(source: 'manual' | 'shortcut'): Promise<void> {
     state.view = 'home';
 
     if (source === 'shortcut') {
-      setStatus('Global shortcut started recording. Speak, then press stop.', 'info');
+      setStatus(t('status.shortcutStarted'), 'info');
     }
 
     render();
     startTimer();
   } catch (err) {
-    setStatus(`Microphone error: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    setStatus(t('status.microphoneError', { message: err instanceof Error ? err.message : String(err) }), 'error');
     render();
   }
 }
@@ -648,7 +682,7 @@ async function startRecording(source: 'manual' | 'shortcut'): Promise<void> {
 async function stopRecording(): Promise<void> {
   if (!state.recorder || !state.isRecording) return;
   stopTimer();
-  setStatus('Stopping capture...', 'info');
+  setStatus(t('status.stoppingCapture'), 'info');
   render();
   state.recorder.stop();
 }
@@ -670,7 +704,7 @@ async function finalizeRecording(chunks: Blob[], mimeType: string): Promise<void
     state.recordingElapsed = 0;
     state.sessions = [saved, ...state.sessions];
     state.busySessionId = saved.id;
-    setStatus(`Saved ${saved.audio.fileName}. Running pipeline...`, 'info');
+    setStatus(t('status.savedRunning', { fileName: saved.audio.fileName }), 'info');
     render();
 
     const result = await window.opentypeless.completeDictationSession(saved.id);
@@ -682,7 +716,7 @@ async function finalizeRecording(chunks: Blob[], mimeType: string): Promise<void
     state.recordingStartedAt = null;
     state.recordingElapsed = 0;
     state.busySessionId = null;
-    setStatus(`Recording failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    setStatus(t('status.recordingFailed', { message: err instanceof Error ? err.message : String(err) }), 'error');
     render();
   }
 }
@@ -692,9 +726,9 @@ function applyCompletionResult(result: CompleteDictationResult): void {
   state.busySessionId = null;
 
   if (result.inserted) {
-    setStatus(`Text inserted into ${result.targetAppName ?? 'the focused app'}.`, 'success');
+    setStatus(t('status.inserted', { app: result.targetAppName ?? t('status.focusedApp') }), 'success');
   } else {
-    setStatus('Processed, but no external target app was available for insertion.', 'warning');
+    setStatus(t('status.noTargetApp'), 'warning');
   }
 
   void refreshAll();
@@ -733,14 +767,14 @@ function pickMimeType(): string {
 // ── IPC event handlers ─────────────────────────────────────────────
 
 function describeMissingPermissions(missing: DesktopPermissionKind[]): string {
-  if (missing.length === 2) return 'microphone and accessibility permissions';
-  return missing[0] === 'microphone' ? 'microphone permission' : 'accessibility permission';
+  if (missing.length === 2) return t('status.permissionsBoth');
+  return missing[0] === 'microphone' ? t('status.permissionsMicrophone') : t('status.permissionsAccessibility');
 }
 
 async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<void> {
   if (event.kind !== 'permission-required') return;
   state.view = 'home';
-  setStatus(`Grant ${describeMissingPermissions(event.missing)} to start dictation.`, 'warning');
+  setStatus(t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }), 'warning');
   await refreshAll();
 }
 
@@ -773,6 +807,8 @@ async function boot(): Promise<void> {
 
   window.opentypeless.onRecordingCommand((cmd) => void handleRecordingCommand(cmd));
   window.opentypeless.onDesktopAttention((evt) => void handleDesktopAttention(evt));
+
+  onLanguageChanged(() => render());
 
   render();
 }
