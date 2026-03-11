@@ -51,4 +51,4 @@ test-results/
 *.seed
 
 # Agent planning artifacts
-docs/plans/
+# docs/plans/ is tracked — contains implementation plans
