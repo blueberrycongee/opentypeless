@@ -11,7 +11,9 @@ export const ipcChannels = {
   completeDictationSession: 'dictation:complete-session',
   listSentMessages: 'outbox:list-sent-messages',
   recordingCommand: 'recording:command',
-  desktopAttention: 'desktop:attention'
+  desktopAttention: 'desktop:attention',
+  overlayState: 'overlay:state',
+  overlayAction: 'overlay:action'
 } as const;
 
 export type ModuleStatus = 'planned' | 'ready' | 'blocked';
@@ -46,6 +48,7 @@ export interface DesktopStatus {
     stopRecording: string;
   };
   activeTargetAppName: string | null;
+  overlayActive: boolean;
 }
 
 export interface DesktopAttentionEvent {
@@ -129,4 +132,51 @@ export interface OpenTypelessBridge {
   listSentMessages: () => Promise<SentMessage[]>;
   onRecordingCommand: (callback: (command: RecordingCommand) => void) => () => void;
   onDesktopAttention: (callback: (event: DesktopAttentionEvent) => void) => () => void;
+}
+
+// ── Overlay types ───────────────────────────────────────────────────
+
+export type OverlayStep = 'transcribing' | 'rewriting' | 'inserting';
+export type OverlayStepStatus = 'pending' | 'active' | 'done';
+
+export interface OverlayStateRecording {
+  kind: 'recording';
+  startedAtIso: string;
+}
+
+export interface OverlayStateProcessing {
+  kind: 'processing';
+  steps: Array<{ id: OverlayStep; status: OverlayStepStatus }>;
+}
+
+export interface OverlayStateSuccess {
+  kind: 'success';
+  targetAppName: string | null;
+}
+
+export interface OverlayStateError {
+  kind: 'error';
+  message: string;
+}
+
+export interface OverlayStateHidden {
+  kind: 'hidden';
+}
+
+export type OverlayState =
+  | OverlayStateRecording
+  | OverlayStateProcessing
+  | OverlayStateSuccess
+  | OverlayStateError
+  | OverlayStateHidden;
+
+export type OverlayAction =
+  | { kind: 'stop' }
+  | { kind: 'cancel' }
+  | { kind: 'dismiss' }
+  | { kind: 'request-focus' };
+
+export interface OverlayBridge {
+  onState: (callback: (state: OverlayState) => void) => () => void;
+  sendAction: (action: OverlayAction) => void;
 }

@@ -170,7 +170,8 @@ function buildDesktopStatus(
   return {
     permissions: desktop.getPermissionState(),
     shortcuts,
-    activeTargetAppName: workflow.getActiveTarget()?.appName ?? null
+    activeTargetAppName: workflow.getActiveTarget()?.appName ?? null,
+    overlayActive: false
   };
 }
 
