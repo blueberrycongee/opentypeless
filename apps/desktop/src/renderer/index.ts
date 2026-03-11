@@ -354,7 +354,7 @@ function renderSettings(): string {
 
     <div class="settings-group">
       <h3 class="settings-group-title">${t('settings.permissions')}</h3>
-      <div class="card">
+      <div class="card" data-onboarding="permissions">
         <div class="settings-row">
           <div class="settings-row-info">
             <p class="settings-row-label">${icons.mic} ${t('settings.microphone')}</p>

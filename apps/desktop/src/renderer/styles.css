@@ -820,7 +820,7 @@ a {
   z-index: 1000;
   opacity: 0;
   transition: opacity 200ms ease;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .onboarding-backdrop--visible {
@@ -852,6 +852,7 @@ a {
   padding: 24px;
   max-width: 360px;
   opacity: 0;
+  pointer-events: auto;
   transition: opacity 200ms ease, top 300ms ease, left 300ms ease, transform 300ms ease;
 }
 

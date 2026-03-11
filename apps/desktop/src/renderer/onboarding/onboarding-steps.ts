@@ -21,7 +21,7 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
   {
     id: 'permissions',
     page: 'settings',
-    targetSelector: '.settings-group:nth-child(2) .card',
+    targetSelector: '[data-onboarding="permissions"]',
     tooltipPosition: 'bottom',
     i18nPrefix: 'onboarding.permissions'
   },
