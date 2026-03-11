@@ -14,6 +14,12 @@ import type {
   RuntimeInfo,
   SentMessage
 } from '../shared/ipc';
+import {
+  createOnboardingController,
+  isOnboardingCompleted,
+  clearOnboardingCompleted,
+  type OnboardingController
+} from './onboarding/onboarding-controller';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -57,6 +63,8 @@ const state: AppState = {
 };
 
 let statusTimeoutId: number | null = null;
+let onboardingController: OnboardingController | null = null;
+let pipelineCompleteCallbacks: Array<() => void> = [];
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -131,6 +139,13 @@ function setStatus(text: string, tone: StatusTone): void {
     state.statusMessage = null;
     render();
   }, 6000);
+}
+
+function navigateTo(view: View): void {
+  if (view !== state.view) {
+    state.view = view;
+    render();
+  }
 }
 
 // ── View: Sidebar ──────────────────────────────────────────────────
@@ -441,6 +456,19 @@ function renderSettings(): string {
         </div>
       </div>
     </div>
+
+    <div class="settings-group">
+      <h3 class="settings-group-title">${t('nav.home')}</h3>
+      <div class="card">
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <p class="settings-row-label">${t('onboarding.restartGuide')}</p>
+            <p class="settings-row-desc">${t('onboarding.restartGuideDesc')}</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" data-action="restart-guide">${t('onboarding.restartGuide')}</button>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -509,10 +537,7 @@ function bindUi(): void {
   document.querySelectorAll<HTMLButtonElement>('[data-nav]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.nav as View;
-      if (target && target !== state.view) {
-        state.view = target;
-        render();
-      }
+      if (target) navigateTo(target);
     });
   });
 
@@ -554,6 +579,14 @@ function bindUi(): void {
         void changeLanguage(locale).then(() => render());
       }
     });
+  });
+
+  document.querySelector('[data-action="restart-guide"]')?.addEventListener('click', () => {
+    clearOnboardingCompleted();
+    if (onboardingController) {
+      onboardingController.destroy();
+    }
+    startOnboarding();
   });
 }
 
@@ -732,6 +765,7 @@ function applyCompletionResult(result: CompleteDictationResult): void {
   }
 
   void refreshAll();
+  pipelineCompleteCallbacks.forEach((cb) => cb());
 }
 
 function cancelRecording(): void {
@@ -791,6 +825,22 @@ async function handleRecordingCommand(command: RecordingCommand): Promise<void> 
   await stopRecording();
 }
 
+function startOnboarding(): void {
+  onboardingController = createOnboardingController({
+    navigateTo: (view) => navigateTo(view),
+    getDesktopStatus: () => window.opentypeless.getDesktopStatus(),
+    getShortcutDisplay: () => shortcutKeys(state.desktop.shortcuts.startRecording),
+    onRecordingCommand: (callback) => window.opentypeless.onRecordingCommand(callback),
+    onPipelineComplete: (callback) => {
+      pipelineCompleteCallbacks.push(callback);
+      return () => {
+        pipelineCompleteCallbacks = pipelineCompleteCallbacks.filter((cb) => cb !== callback);
+      };
+    }
+  });
+  onboardingController.start();
+}
+
 // ── Boot ───────────────────────────────────────────────────────────
 
 async function boot(): Promise<void> {
@@ -811,6 +861,10 @@ async function boot(): Promise<void> {
   onLanguageChanged(() => render());
 
   render();
+
+  if (!isOnboardingCompleted()) {
+    startOnboarding();
+  }
 }
 
 void boot();
