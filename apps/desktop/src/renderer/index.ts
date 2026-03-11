@@ -458,7 +458,7 @@ function renderSettings(): string {
     </div>
 
     <div class="settings-group">
-      <h3 class="settings-group-title">${t('nav.home')}</h3>
+      <h3 class="settings-group-title">${t('onboarding.restartGuide')}</h3>
       <div class="card">
         <div class="settings-row">
           <div class="settings-row-info">
@@ -806,6 +806,10 @@ function describeMissingPermissions(missing: DesktopPermissionKind[]): string {
 }
 
 async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<void> {
+  if (event.kind === 'permission-lost') {
+    showPermissionLostModal(event.missing);
+    return;
+  }
   if (event.kind !== 'permission-required') return;
   state.view = 'home';
   setStatus(t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }), 'warning');
@@ -839,6 +843,43 @@ function startOnboarding(): void {
     }
   });
   onboardingController.start();
+}
+
+function showPermissionLostModal(missing: DesktopPermissionKind[]): void {
+  if (document.querySelector('.perm-modal-backdrop')) return;
+
+  const permNames = missing.map((k) =>
+    k === 'microphone' ? t('settings.microphone') : t('settings.accessibility')
+  ).join(', ');
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'perm-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="perm-modal">
+      <h3 class="perm-modal-title">${t('onboarding.permissionLost.title')}</h3>
+      <p class="perm-modal-body">${t('onboarding.permissionLost.description', { permissions: permNames })}</p>
+      <div class="perm-modal-actions">
+        <button class="btn btn-secondary btn-sm" data-perm-modal="dismiss">${t('onboarding.permissionLost.dismiss')}</button>
+        <button class="btn btn-primary btn-sm" data-perm-modal="open-settings">${t('onboarding.permissionLost.openSettings')}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  requestAnimationFrame(() => backdrop.classList.add('perm-modal-backdrop--visible'));
+
+  function dismiss(): void {
+    backdrop.classList.remove('perm-modal-backdrop--visible');
+    backdrop.addEventListener('transitionend', () => backdrop.remove(), { once: true });
+    setTimeout(() => backdrop.remove(), 300);
+  }
+
+  backdrop.querySelector('[data-perm-modal="dismiss"]')?.addEventListener('click', dismiss);
+  backdrop.querySelector('[data-perm-modal="open-settings"]')?.addEventListener('click', () => {
+    dismiss();
+    for (const kind of missing) {
+      void window.opentypeless.openPermissionSettings(kind);
+    }
+  });
 }
 
 // ── Boot ───────────────────────────────────────────────────────────

@@ -51,10 +51,9 @@ export interface DesktopStatus {
   overlayActive: boolean;
 }
 
-export interface DesktopAttentionEvent {
-  kind: 'permission-required';
-  missing: DesktopPermissionKind[];
-}
+export type DesktopAttentionEvent =
+  | { kind: 'permission-required'; missing: DesktopPermissionKind[] }
+  | { kind: 'permission-lost'; missing: DesktopPermissionKind[] };
 
 export interface TranscriptResult {
   text: string;
