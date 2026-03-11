@@ -6,7 +6,7 @@
 
 **Architecture:** A second frameless, always-on-top BrowserWindow managed by the main process. The overlay has its own HTML entry point, preload script, and renderer. The main process controls the overlay lifecycle and pushes state updates to it via IPC. The shortcut becomes a toggle: first press starts recording and opens the overlay, second press stops recording.
 
-**Tech Stack:** Electron BrowserWindow, TypeScript, Webpack (new Forge entry point), same CSS design system as hub window.
+**Tech Stack:** Electron BrowserWindow, TypeScript, Webpack (new Forge entry point), own dark-theme CSS (independent of hub window's light theme).
 
 ---
 
@@ -20,7 +20,7 @@ User is in any desktop app (e.g. Notes, Slack, Chrome)
   ├─ Presses ⌘⇧;
   │   → Overlay appears at top-center of screen
   │   → Recording starts
-  │   → Overlay shows: pulsing indicator, live timer, [Cancel] and [■ Stop] buttons
+  │   → Overlay shows: breathing coral dot, live timer, esc badge, and [■ Stop] button
   │
   ├─ User speaks into microphone
   │
@@ -30,11 +30,11 @@ User is in any desktop app (e.g. Notes, Slack, Chrome)
   │   └─ Clicks [■ Stop] on the overlay
   │
   ├─ Overlay switches to processing mode
-  │   → Shows progress steps: Transcribing → Rewriting → Inserting
-  │   → Each step lights up as it starts and gets a checkmark when done
+  │   → Shows current step label (Transcribing → Rewriting → Inserting) with progress bar
+  │   → Label crossfades smoothly as each step begins
   │
   ├─ On success:
-  │   → Overlay shows "✓ Inserted into {appName}" for 1.5 seconds
+  │   → Overlay shows "✓ Done" for 1.2 seconds
   │   → Overlay auto-closes
   │   → Text has been pasted into the original target app
   │
@@ -71,92 +71,367 @@ When recording is active, `⌘⇧;` stops recording (same as clicking Stop).
 
 ## 2. Visual Design Spec
 
-The overlay uses the same design system as the hub window (colors, typography, radius, etc. from `styles.css` `:root` variables). It is a compact floating panel.
+### 2.0 Design philosophy
 
-### 2.1 Dimensions and position
+The overlay is a **system-level instrument**, not an application window. Three principles govern every visual decision:
 
-- Width: 320px
-- Height: dynamic based on state (~80px recording, ~90px processing, ~60px success/error)
-- Position: top-center of the screen, 80px below the top edge
-- Corner radius: 14px (matches `--radius-lg`)
-- Background: `#ffffff` with slight opacity (`rgba(255, 255, 255, 0.92)`) and backdrop blur
-- Border: `1px solid rgba(0, 0, 0, 0.08)`
-- Shadow: `0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)`
+1. **Near-monochrome** — Dark frosted glass with exactly one accent color (soft coral, used only for the recording indicator dot). Everything else is white at varying opacities.
+2. **Typography-driven** — Status is conveyed through clean text, font weight, and opacity — not emoji, colored badges, or decorative icons. The only non-text element is the SVG checkmark in the success state.
+3. **Quiet animation** — Smooth, slow transitions. Breathing (not blinking) for the recording dot. Crossfades for state changes. Spring physics for the success checkmark.
 
-### 2.2 Recording state
+The overlay uses a **dark color scheme** independent of the hub window's warm light theme. Dark floating panels feel native on macOS (cf. Now Playing widget, Do Not Disturb indicator, Stage Manager labels) and reduce visual weight against any desktop background.
 
-```
-┌──────────────────────────────────────────┐
-│                                          │
-│   🔴  Recording              0:04       │
-│                                          │
-│   [Cancel]                  [■ Stop]     │
-│                                          │
-└──────────────────────────────────────────┘
-```
+### 2.1 Color tokens
 
-- Left: pulsing red dot (8px, same `pulse-rec` animation) + "Recording" label
-- Right: live timer in tabular-nums font, updates every 100ms
-- Bottom row: "Cancel" ghost button (left), "Stop" primary button (right)
-- The red dot and "Recording" text are `var(--red)` colored
+Defined in `src/renderer/overlay/styles.css` as `:root` variables. These are **separate** from the hub window's light-theme variables — the overlay has its own isolated design surface.
 
-### 2.3 Processing state
+```css
+:root {
+  /* ── Surface ─────────────────────────────────── */
+  --ov-bg: rgba(28, 28, 30, 0.82);        /* macOS systemGray6 */
+  --ov-border: rgba(255, 255, 255, 0.08);
+  --ov-shadow: 0 8px 32px rgba(0, 0, 0, 0.32),
+               0 2px 8px rgba(0, 0, 0, 0.2);
+  --ov-blur: blur(40px) saturate(180%);
 
-```
-┌──────────────────────────────────────────┐
-│                                          │
-│   ● Transcribing...                      │
-│   ○ Rewriting                            │
-│   ○ Inserting                            │
-│                                          │
-│   ━━━━━━━━━━━━━━━━━━━░░░░░░░░░░░░░░░   │
-│                                          │
-└──────────────────────────────────────────┘
-```
+  /* ── Text ────────────────────────────────────── */
+  --ov-text-primary: rgba(255, 255, 255, 0.92);
+  --ov-text-secondary: rgba(255, 255, 255, 0.55);
+  --ov-text-tertiary: rgba(255, 255, 255, 0.3);
 
-- A vertical step list with 3 steps: Transcribing, Rewriting, Inserting
-- Current step: filled dot (`●`) + "..." suffix + `var(--blue)` color
-- Completed step: checkmark (`✓`) + `var(--green)` color
-- Pending step: empty dot (`○`) + `var(--text-tertiary)` color
-- Below the steps: a thin progress bar (3px height, rounded ends)
-- The progress bar is indeterminate (animated shimmer) during each active step
-- No cancel button during processing (the pipeline is already running)
+  /* ── Accent — recording indicator dot ONLY ──── */
+  --ov-accent: #FF6363;
 
-### 2.4 Success state
+  /* ── Glass button ──────────────────────────── */
+  --ov-btn-bg: rgba(255, 255, 255, 0.1);
+  --ov-btn-bg-hover: rgba(255, 255, 255, 0.16);
+  --ov-btn-bg-active: rgba(255, 255, 255, 0.08);
+  --ov-btn-text: rgba(255, 255, 255, 0.88);
 
-```
-┌──────────────────────────────────────────┐
-│                                          │
-│   ✓  Inserted into Notes                 │
-│                                          │
-└──────────────────────────────────────────┘
+  /* ── Progress bar ──────────────────────────── */
+  --ov-progress-track: rgba(255, 255, 255, 0.08);
+  --ov-progress-fill: rgba(255, 255, 255, 0.28);
+
+  /* ── Keyboard hint badge ───────────────────── */
+  --ov-kbd-bg: rgba(255, 255, 255, 0.06);
+  --ov-kbd-text: rgba(255, 255, 255, 0.3);
+  --ov-kbd-border: rgba(255, 255, 255, 0.08);
+}
 ```
 
-- Green checkmark icon + success message
-- `var(--green)` for the check, `var(--text)` for the label
-- Auto-closes after 1.5 seconds
-- If no target app was available: "✓ Processed (no target app)"
+**Why these values:**
+- `rgba(28, 28, 30, …)` is the macOS system dark gray (`systemGray6` in Apple HIG).
+- `0.82` opacity + `saturate(180%)` creates the characteristic vibrancy/frosted-glass effect.
+- Text uses white at 3 opacity tiers (92% / 55% / 30%) matching Apple's dark-mode text hierarchy.
+- The accent `#FF6363` is a soft coral — warmer and less alarming than pure red, but universally reads as "recording."
 
-### 2.5 Error state
+### 2.2 Typography
+
+Font stack: `-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif`
+
+| Element | Size | Weight | Color | Notes |
+|---------|------|--------|-------|-------|
+| Timer (`0:04`) | 13px | 500 | `--ov-text-secondary` | `font-variant-numeric: tabular-nums` to prevent layout shift |
+| Status label (`Transcribing…`) | 13px | 400 | `--ov-text-secondary` | Crossfade animation on step change |
+| Completion label (`Done` / `Copied`) | 13px | 500 | `--ov-text-primary` | |
+| Error title | 13px | 500 | `--ov-text-primary` | |
+| Error detail | 12px | 400 | `--ov-text-tertiary` | Single line, `text-overflow: ellipsis` |
+| Button label (`Stop` / `Dismiss`) | 12px | 500 | `--ov-btn-text` | |
+| Keyboard hint (`esc`) | 11px | 500 | `--ov-kbd-text` | Monospace: `'SF Mono', ui-monospace, monospace` |
+
+### 2.3 Dimensions and position
+
+| Property | Value |
+|----------|-------|
+| Width | 280px (fixed) |
+| Height | Dynamic: **44px** recording · **56px** processing · **44px** success · **~80px** error |
+| Position | Top-center of primary display, **64px** below top edge |
+| Border-radius | 16px (reads as pill-like at 44px height, rounded-rect when taller) |
+| Background | `var(--ov-bg)` |
+| Backdrop filter | `var(--ov-blur)` — `blur(40px) saturate(180%)` |
+| Border | `1px solid var(--ov-border)` |
+| Box shadow | `var(--ov-shadow)` |
+
+### 2.4 Reusable components
+
+These components are referenced by the state layouts in §2.5. Implement each as a CSS class + renderer helper function.
+
+#### 2.4.1 Recording indicator dot
+
+The **only colored element** in the entire overlay.
+
+| Property | Value |
+|----------|-------|
+| Size | 8 × 8 px |
+| Shape | Circle (`border-radius: 50%`) |
+| Color | `var(--ov-accent)` (`#FF6363`) |
+| Animation | Opacity oscillates 0.35 → 1.0 → 0.35, period **2 s**, `ease-in-out` |
+
+A slow **breathing** rhythm, not a fast blink. The gentle pulse signals "alive" without urgency.
+
+```css
+@keyframes breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ov-accent);
+  animation: breathe 2s ease-in-out infinite;
+}
+```
+
+#### 2.4.2 Glass button
+
+Shared by Stop and Dismiss. Blends into the frosted surface with a subtle lighter fill.
+
+| Property | Value |
+|----------|-------|
+| Background | `var(--ov-btn-bg)` → hover: `var(--ov-btn-bg-hover)` → active: `var(--ov-btn-bg-active)` |
+| Border | none |
+| Border-radius | 8px |
+| Padding | 5px 14px |
+| Font | 12px, weight 500, `var(--ov-btn-text)` |
+| Transition | `background 120ms ease` |
+| Cursor | `pointer` |
+
+The **Stop** variant prepends a small filled square icon (8 × 8 px, `var(--ov-btn-text)`, `border-radius: 1.5px`) with a 6px gap before the text:
 
 ```
-┌──────────────────────────────────────────┐
-│                                          │
-│   ✗  Pipeline failed                     │
-│   Whisper process exited with code 1     │
-│                              [Dismiss]   │
-│                                          │
-└──────────────────────────────────────────┘
+[ ■ Stop ]
 ```
 
-- Red X icon + error title + detail message (truncated to 1 line)
-- `var(--red)` for the icon, `var(--text-secondary)` for detail
-- [Dismiss] ghost button to close
-- Does NOT auto-close (user must acknowledge)
+#### 2.4.3 Keyboard hint badge
 
-### 2.6 Cancelled state
+Displays a shortcut key (e.g. `esc`) as a subtle physical-key-shaped label. **The badge is also clickable** — it triggers the same action as the shortcut it represents.
 
-No visual state. The overlay closes immediately when the user cancels.
+| Property | Value |
+|----------|-------|
+| Background | `var(--ov-kbd-bg)` |
+| Border | `1px solid var(--ov-kbd-border)` |
+| Border-radius | 4px |
+| Padding | 2px 6px |
+| Font | 11px, monospace, weight 500, `var(--ov-kbd-text)` |
+| Hover | text brightens to `rgba(255, 255, 255, 0.5)` |
+| Cursor | `pointer` |
+
+#### 2.4.4 Progress bar
+
+A thin indeterminate shimmer bar. Conveys "processing" without committing to a percentage.
+
+| Property | Value |
+|----------|-------|
+| Track height | 3px |
+| Track color | `var(--ov-progress-track)` |
+| Track border-radius | 1.5px |
+| Shimmer width | 40% of track |
+| Shimmer color | `var(--ov-progress-fill)` |
+| Shimmer border-radius | 1.5px |
+| Animation | Translate left → right, 1.5 s `ease-in-out` infinite |
+
+```css
+.progress-bar {
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--ov-progress-track);
+  overflow: hidden;
+}
+.progress-shimmer {
+  height: 100%;
+  width: 40%;
+  border-radius: 1.5px;
+  background: var(--ov-progress-fill);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+```
+
+#### 2.4.5 SVG checkmark
+
+A stroke-drawn check for the success state. Not an emoji — a precise vector path.
+
+| Property | Value |
+|----------|-------|
+| ViewBox | `0 0 16 16` |
+| Path | `M4 8.5 L7 11.5 L12 5` |
+| Stroke | `var(--ov-text-primary)`, width 2px, `stroke-linecap: round`, `stroke-linejoin: round` |
+| Appear animation | Stroke draws on via `stroke-dashoffset` (300 ms) + scale 0.5 → 1.1 → 1.0 (spring) |
+
+```css
+@keyframes check-draw {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes check-appear {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.checkmark {
+  animation: check-appear 300ms ease-out forwards;
+}
+.checkmark path {
+  stroke-dasharray: 20;
+  animation: check-draw 300ms ease-out 50ms forwards;
+}
+```
+
+### 2.5 State layouts
+
+#### 2.5.1 Recording (height: 44px)
+
+A compact single-row pill. The user's peripheral vision registers "recording in progress" without demanding attention.
+
+```
+┌───────────────────────────────────────┐
+│  ◉  0:04            esc   [ ■ Stop ] │
+└───────────────────────────────────────┘
+```
+
+Layout: `display: flex; align-items: center; height: 44px; padding: 0 16px;`
+
+| # | Element | Flex | Details |
+|---|---------|------|---------|
+| 1 | Recording dot | `flex: none` | §2.4.1 — 8px coral dot, breathing animation |
+| 2 | Timer | `flex: none; margin-left: 10px` | `0:00` format, `--ov-text-secondary`, tabular-nums |
+| 3 | _(spacer)_ | `flex: 1` | |
+| 4 | `esc` badge | `flex: none` | §2.4.3 — click or press Escape to cancel |
+| 5 | Stop button | `flex: none; margin-left: 8px` | §2.4.2 — `[ ■ Stop ]` glass button |
+
+**No "Recording" label.** The breathing coral dot + running timer is universally understood as "recording in progress." Omitting the label keeps the pill compact and restrained.
+
+Behavior:
+- Timer starts at `0:00`, renderer's `setInterval(100ms)` computes elapsed from `startedAtIso`.
+- Click `esc` badge or press `Escape` → sends `{ kind: 'cancel' }`.
+- Click Stop → sends `{ kind: 'stop' }`.
+
+#### 2.5.2 Processing (height: 56px)
+
+A single rotating label replaces the old 3-step list. The user doesn't need to see future steps — just what's happening now.
+
+```
+┌───────────────────────────────────────┐
+│  Transcribing…                        │
+│  ━━━━━━━━━━━━░░░░░░░░░░░░░░░░░░░░   │
+└───────────────────────────────────────┘
+```
+
+Layout: `display: flex; flex-direction: column; padding: 14px 16px; gap: 10px;`
+
+| Row | Element | Details |
+|-----|---------|---------|
+| 1 | Status label | Current step + `…`, 13px weight 400, `--ov-text-secondary` |
+| 2 | Progress bar | §2.4.4 — indeterminate shimmer |
+
+Step label mapping:
+
+| Pipeline step | Display text |
+|---------------|-------------|
+| `transcribing` | `Transcribing…` |
+| `rewriting` | `Rewriting…` |
+| `inserting` | `Inserting…` |
+
+**Crossfade** when step changes: outgoing label fades to `opacity: 0` over 150 ms, incoming label fades from `opacity: 0` to `1` over 150 ms (simultaneous, `position: absolute` stacking during transition).
+
+No cancel button — pipeline is already running and cannot be interrupted.
+
+#### 2.5.3 Success (height: 44px)
+
+Ultra-brief confirmation. The checkmark draw-on animation provides a satisfying micro-moment.
+
+```
+┌───────────────────────────────────────┐
+│  ✓  Done                              │
+└───────────────────────────────────────┘
+```
+
+Layout: `display: flex; align-items: center; height: 44px; padding: 0 16px;`
+
+| # | Element | Details |
+|---|---------|---------|
+| 1 | Checkmark | §2.4.5 — 16px SVG stroke, `--ov-text-primary`, draw-on + spring animation |
+| 2 | Label | `margin-left: 10px`, 13px weight 500, `--ov-text-primary` |
+
+Label logic:
+- Text was pasted into target app → **`Done`**
+- No target app detected (copied to clipboard only) → **`Copied`**
+
+**Do not show the target app name.** `Done` is sufficient and keeps the overlay minimal.
+
+Auto-closes after **1.2 seconds**.
+
+#### 2.5.4 Error (height: ~80px)
+
+Informative but visually restrained. **No red color anywhere** — the dark surface and white text provide sufficient signal that something went wrong.
+
+```
+┌───────────────────────────────────────┐
+│  Pipeline failed                      │
+│  Whisper exited with code 1           │
+│                            [ Dismiss ] │
+└───────────────────────────────────────┘
+```
+
+Layout: `display: flex; flex-direction: column; padding: 14px 16px;`
+
+| Row | Element | Details |
+|-----|---------|---------|
+| 1 | Error title | 13px weight 500, `--ov-text-primary` |
+| 2 | Error detail | 12px weight 400, `--ov-text-tertiary`, single line, `text-overflow: ellipsis`, `margin-top: 4px` |
+| 3 | Dismiss button | §2.4.2, `align-self: flex-end`, `margin-top: 10px` |
+
+Does **not** auto-close. User must click Dismiss.
+
+#### 2.5.5 Cancelled
+
+No visual state. The overlay runs the exit animation (§2.6) and closes.
+
+### 2.6 Transitions and animations
+
+#### 2.6.1 Overlay appear / disappear
+
+| Trigger | Properties | Duration | Easing |
+|---------|-----------|----------|--------|
+| Appear | `opacity: 0 → 1`, `translateY: −4px → 0` | 180 ms | `ease-out` |
+| Disappear | `opacity: 1 → 0`, `translateY: 0 → −4px` | 150 ms | `ease-in` |
+
+```css
+.overlay-container {
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+.overlay-container.entering {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.overlay-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.overlay-container.exiting {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
+}
+```
+
+#### 2.6.2 State transitions (content changes)
+
+| From → To | Animation | Duration | Easing |
+|-----------|-----------|----------|--------|
+| Recording → Processing | Content crossfade + height morph | 200 ms | `ease` |
+| Processing → Success | Content crossfade + height morph | 200 ms | `ease` |
+| Processing → Error | Content crossfade + height morph | 200 ms | `ease` |
+| Step label change | Simultaneous old-out / new-in fade | 150 ms | `ease` |
+
+**Height morph:** `transition: height 200ms ease` on the outer container with `overflow: hidden` during resize to prevent content flash.
+
+**Content crossfade:** Both old and new content render `position: absolute` inside a wrapper; old fades out while new fades in simultaneously.
 
 ---
 
@@ -166,8 +441,8 @@ No visual state. The overlay closes immediately when the user cancels.
 
 ```typescript
 const overlayWindow = new BrowserWindow({
-  width: 320,
-  height: 88,
+  width: 280,
+  height: 44,
   frame: false,
   transparent: true,
   alwaysOnTop: true,
@@ -187,7 +462,7 @@ const overlayWindow = new BrowserWindow({
 
 **macOS-specific:** Set `overlayWindow.setVisibleOnAllWorkspaces(true)` so the overlay appears even if the user switches Spaces. Set `overlayWindow.setAlwaysOnTop(true, 'floating')` for the correct window level.
 
-**Positioning:** On creation, read the primary display bounds via `screen.getPrimaryDisplay().workArea` and center the window horizontally, 80px below the top.
+**Positioning:** On creation, read the primary display bounds via `screen.getPrimaryDisplay().workArea` and center the window horizontally, 64px below the top.
 
 **Focus handling:** The window starts as `focusable: false` so it does not steal focus when shown. When the user explicitly clicks on the overlay (detected by a `mousedown` listener in the renderer), the renderer sends an IPC message and the main process calls `overlayWindow.setFocusable(true)` then `overlayWindow.focus()`. After the click is handled (stop/cancel), the main process sets `focusable` back to `false`.
 
@@ -402,15 +677,15 @@ Exposed as `window.overlayBridge`.
 - Create: `src/renderer/overlay/index.ts`
 
 **Design decisions (do not ask):**
-- Use the same `:root` CSS variables as the hub window for color/typography consistency.
-- The overlay body has `background: transparent` and a single container div with the frosted-glass card style.
+- The overlay uses its own dark color tokens (see §2.1), **not** the hub window's light `:root` variables.
+- The overlay body has `background: transparent` and a single container div with the dark frosted-glass style.
 - The overlay renderer maintains its own 100ms interval timer during the recording state to update elapsed time (it receives `startedAtIso` from main and computes elapsed locally to avoid high-frequency IPC).
-- Reuse the `icons.ts` module from the hub renderer (import it).
+- The SVG checkmark icon is defined inline in the renderer; no external icon library or `icons.ts` import needed.
 - The overlay HTML has a minimal CSP matching the hub window.
 
 **Steps:**
 1. Create `index.html` with `<div id="overlay"></div>`, matching CSP.
-2. Create `styles.css` with overlay-specific styles (the frosted card, recording row, processing steps, success/error states, progress bar animation).
+2. Create `styles.css` with all overlay styles: dark frosted surface, color tokens (§2.1), recording pill layout, processing label + progress bar, success/error states, all reusable components (§2.4), and animations (§2.6).
 3. Create `index.ts`:
    - Listen for `overlayBridge.onState()` and re-render on every state change.
    - Render functions for each state: `renderRecording`, `renderProcessing`, `renderSuccess`, `renderError`.
@@ -518,7 +793,7 @@ interface OverlayManager {
    - Listen for action IPC from the overlay renderer via `ipcMain.on`.
    - On `request-focus` action: `setFocusable(true)` + `focus()`, then after a short delay reset `setFocusable(false)`.
    - On `hide()`: send hidden state, then `window.hide()`. Do not destroy — reuse for next recording.
-   - On `transitionToSuccess()`: start a 1.5s timeout that calls `hide()`.
+   - On `transitionToSuccess()`: start a 1.2s timeout that calls `hide()`.
    - On `destroy()`: close and nullify the window.
 3. Run tests: `npm run test`.
 4. Run typecheck.
@@ -652,16 +927,16 @@ These are medium/small decisions made in this document. Implement them directly.
 | Keep `⌘⇧'` as an alternative stop shortcut | Backwards compatibility, some users prefer a dedicated stop key |
 | Overlay window is hidden, not destroyed, after use | Faster to re-show on next recording |
 | Timer runs in the overlay renderer, not pushed from main | Avoids high-frequency IPC for a display-only concern |
-| Progress uses 3 named steps (transcribing, rewriting, inserting) | Matches the actual pipeline stages; simple and predictable |
-| Success auto-closes after 1.5 seconds | Long enough to confirm success, short enough not to annoy |
+| Processing shows a single rotating label + progress bar, not a step list | Minimal information density; user only needs to know what's happening now |
+| Success auto-closes after 1.2 seconds | Minimal "Done" text is instantly readable; 1.2s feels responsive |
 | Error requires manual dismiss | User should see and acknowledge failures |
 | Cancel during recording discards the audio | User explicitly chose to cancel; saving would be confusing |
-| Overlay uses same CSS variable names as hub for consistency | One design system across all windows |
+| Overlay uses its own dark color tokens, independent of hub's light theme | Dark floating panels feel native on macOS; reduces visual weight on any desktop |
 | Use `alwaysOnTop: true, 'floating'` level on macOS | Ensures overlay is above full-screen apps and Spaces |
 | Hub's "Start recording" button also triggers the overlay | Consistent experience regardless of entry point |
 | Progress bar is indeterminate (shimmer animation) | We don't know how long each step takes; a fake percentage would be dishonest |
-| Overlay is positioned at top-center, 80px from top | Visible but not covering the main content area |
-| Window width 320px | Compact enough to not obscure content, wide enough for the UI |
+| Overlay is positioned at top-center, 64px from top | Visible but not covering the main content area |
+| Window width 280px | Narrower pill shape = more compact and premium; sufficient for minimal content |
 
 ## 6. Open Questions (Ask Before Implementing)
 
