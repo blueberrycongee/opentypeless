@@ -1,12 +1,12 @@
 import './styles.css';
 
+import { t } from '../i18n';
 import type { OverlayState, OverlayStep } from '../../shared/ipc';
 
-const STEP_LABELS: Record<OverlayStep, string> = {
-  transcribing: 'Transcribing\u2026',
-  rewriting: 'Rewriting\u2026',
-  inserting: 'Inserting\u2026'
-};
+function stepLabel(step: OverlayStep): string {
+  const key = step === 'transcribing' ? 'overlay.transcribing' : step === 'rewriting' ? 'overlay.rewriting' : 'overlay.inserting';
+  return t(key);
+}
 
 let currentState: OverlayState = { kind: 'hidden' };
 let timerInterval: number | null = null;
@@ -37,7 +37,7 @@ function renderRecording(startedAtIso: string): string {
       <span class="kbd-badge" data-action="cancel">esc</span>
       <button class="glass-btn" data-action="stop">
         <span class="stop-icon"></span>
-        Stop
+        ${t('overlay.stop')}
       </button>
     </div>
   `;
@@ -45,7 +45,7 @@ function renderRecording(startedAtIso: string): string {
 
 function renderProcessing(steps: Array<{ id: OverlayStep; status: string }>): string {
   const activeStep = steps.find((s) => s.status === 'active');
-  const label = activeStep ? STEP_LABELS[activeStep.id] : 'Processing\u2026';
+  const label = activeStep ? stepLabel(activeStep.id) : t('overlay.processing');
 
   return `
     <div class="state-processing">
@@ -60,7 +60,7 @@ function renderProcessing(steps: Array<{ id: OverlayStep; status: string }>): st
 }
 
 function renderSuccess(targetAppName: string | null): string {
-  const label = targetAppName ? 'Done' : 'Copied';
+  const label = targetAppName ? t('overlay.done') : t('overlay.copied');
 
   return `
     <div class="state-success">
@@ -77,16 +77,14 @@ function renderSuccess(targetAppName: string | null): string {
 }
 
 function renderError(message: string): string {
-  const parts = message.split(':');
-  const title = 'Pipeline failed';
   const detail = message.length > 80 ? message.slice(0, 80) + '\u2026' : message;
 
   return `
     <div class="state-error">
-      <div class="error-title">${title}</div>
+      <div class="error-title">${t('overlay.pipelineFailed')}</div>
       <div class="error-detail">${escapeHtml(detail)}</div>
       <div class="error-actions">
-        <button class="glass-btn" data-action="dismiss">Dismiss</button>
+        <button class="glass-btn" data-action="dismiss">${t('overlay.dismiss')}</button>
       </div>
     </div>
   `;
