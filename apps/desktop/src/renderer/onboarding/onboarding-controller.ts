@@ -127,7 +127,7 @@ export function createOnboardingController(
     const shortcut = deps.getShortcutDisplay();
 
     // Build tooltip content based on step
-    let title = t(`${step.i18nPrefix}.title`);
+    const title = t(`${step.i18nPrefix}.title`);
     let body = t(`${step.i18nPrefix}.description`, { shortcut });
     let primaryLabel: string | null = null;
     let onPrimary: (() => void) | null = null;
