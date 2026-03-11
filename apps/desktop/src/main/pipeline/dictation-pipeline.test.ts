@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
-import { createDictationPipeline } from './dictation-pipeline';
+import { createDictationPipeline, type PipelineProgressStep } from './dictation-pipeline';
 
 test('saveCapturedAudio stores raw audio and a queued pipeline manifest', async () => {
   const root = await mkdtemp(join(tmpdir(), 'opentypeless-pipeline-'));
@@ -80,6 +80,35 @@ test('processSession runs transcription, rewrite, and simulated send in order', 
   const outbox = JSON.parse(await readFile(join(root, 'outbox', 'messages.json'), 'utf8')) as Array<{ text: string }>;
   assert.equal(outbox.length, 1);
   assert.equal(outbox[0].text, 'Hey Sam, let\'s meet at noon.');
+});
+
+test('processSession calls onProgress in order: transcribing, rewriting, inserting', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'opentypeless-pipeline-'));
+  const progressSteps: PipelineProgressStep[] = [];
+  const pipeline = createDictationPipeline(root, {
+    transcribeAudio: async () => ({
+      transcript: 'hello',
+      normalizedAudioRelativePath: null
+    }),
+    rewriteTranscript: async () => 'Hello.',
+    simulateSend: async (message) => ({
+      channel: 'test',
+      deliveredText: message,
+      deliveredAt: '2026-03-11T00:00:00.000Z'
+    }),
+    onProgress: (step) => {
+      progressSteps.push(step);
+    }
+  });
+
+  const saved = await pipeline.saveCapturedAudio({
+    audioBytes: [1],
+    durationMs: 100,
+    mimeType: 'audio/webm'
+  });
+  await pipeline.processSession(saved.id);
+
+  assert.deepEqual(progressSteps, ['transcribing', 'rewriting', 'inserting']);
 });
 
 test('listSessions returns newest sessions first', async () => {

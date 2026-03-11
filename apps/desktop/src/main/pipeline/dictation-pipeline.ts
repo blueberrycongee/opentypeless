@@ -4,6 +4,8 @@ import { join } from 'node:path';
 
 import type { DeliveryResult, DictationSession, SaveCapturedAudioInput, SentMessage } from '../../shared/ipc';
 
+export type PipelineProgressStep = 'transcribing' | 'rewriting' | 'inserting';
+
 export interface DictationPipelineDeps {
   transcribeAudio?: (audioRelativePath: string, session: DictationSession) => Promise<{
     transcript: string;
@@ -15,6 +17,7 @@ export interface DictationPipelineDeps {
     model?: string;
   } | string>;
   simulateSend?: (message: string, session: DictationSession) => Promise<DeliveryResult>;
+  onProgress?: (step: PipelineProgressStep) => void;
   now?: () => string;
 }
 
@@ -103,6 +106,7 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
       await persistSession(dataRoot, session);
 
       try {
+        deps.onProgress?.('transcribing');
         const transcription = await deps.transcribeAudio(existing.audio.relativePath, existing);
         session = {
           ...session,
@@ -123,6 +127,7 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
         };
         await persistSession(dataRoot, session);
 
+        deps.onProgress?.('rewriting');
         const rewritten = await deps.rewriteTranscript(transcription.transcript, session);
         const rewrittenText = typeof rewritten === 'string' ? rewritten : rewritten.text;
         const rewrittenModel = typeof rewritten === 'string' ? 'local-rewrite' : rewritten.model ?? 'local-rewrite';
@@ -141,6 +146,7 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
         };
         await persistSession(dataRoot, session);
 
+        deps.onProgress?.('inserting');
         const delivery = await deps.simulateSend(rewrittenText, session);
         session = {
           ...session,
