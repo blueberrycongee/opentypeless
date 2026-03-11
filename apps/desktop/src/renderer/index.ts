@@ -187,8 +187,17 @@ function renderHome(): string {
     </div>
   `;
 
-  const recCard = state.isRecording
-    ? `
+  let recCard: string;
+  if (state.desktop.overlayActive) {
+    recCard = `
+    <div class="rec-card rec-card--active">
+      <div class="rec-icon rec-icon--active">${icons.micLarge}</div>
+      <p class="rec-title">Recording in progress</p>
+      <p class="rec-hint">Use the floating overlay or press ${shortcutKeys(state.desktop.shortcuts.startRecording)} to stop.</p>
+    </div>
+    `;
+  } else if (state.isRecording) {
+    recCard = `
     <div class="rec-card rec-card--active">
       <div class="rec-icon rec-icon--active">${icons.micLarge}</div>
       <p class="rec-title">Recording...</p>
@@ -196,15 +205,17 @@ function renderHome(): string {
       <p class="rec-timer" id="recording-timer">${formatElapsed(state.recordingElapsed)}</p>
       <button class="btn btn-danger" data-action="stop-recording">${icons.stop} Stop recording</button>
     </div>
-  `
-    : `
+    `;
+  } else {
+    recCard = `
     <div class="rec-card">
       <div class="rec-icon rec-icon--idle">${icons.micLarge}</div>
       <p class="rec-title">Ready to dictate</p>
       <p class="rec-hint">Press ${shortcutKeys(state.desktop.shortcuts.startRecording)} from any app, or start here.</p>
       <button class="btn btn-primary" data-action="start-recording">${icons.mic} Start recording</button>
     </div>
-  `;
+    `;
+  }
 
   const stats = `
     <div class="stat-grid">
@@ -689,6 +700,27 @@ function applyCompletionResult(result: CompleteDictationResult): void {
   void refreshAll();
 }
 
+function cancelRecording(): void {
+  if (!state.recorder || !state.isRecording) return;
+  stopTimer();
+
+  state.recorder.ondataavailable = null;
+  state.recorder.onstop = null;
+  try {
+    state.recorder.stop();
+  } catch {
+    // already stopped
+  }
+
+  stopStream();
+  state.isRecording = false;
+  state.recorder = null;
+  state.recordingStartedAt = null;
+  state.recordingElapsed = 0;
+  state.busySessionId = null;
+  void refreshAll();
+}
+
 function stopStream(): void {
   state.stream?.getTracks().forEach((t) => t.stop());
   state.stream = null;
@@ -716,6 +748,10 @@ async function handleRecordingCommand(command: RecordingCommand): Promise<void> 
   if (command === 'start') {
     await refreshAll();
     await startRecording('shortcut');
+    return;
+  }
+  if (command === 'cancel') {
+    cancelRecording();
     return;
   }
   await stopRecording();
