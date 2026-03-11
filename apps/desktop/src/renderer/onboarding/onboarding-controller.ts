@@ -124,6 +124,9 @@ export function createOnboardingController(
     const spotlightRect = positionSpotlight(elements.spotlight, step.targetSelector);
     positionTooltip(elements.tooltip, step.tooltipPosition, spotlightRect);
 
+    // Hide backdrop background when spotlight is visible to avoid double-layered dimming
+    elements.backdrop.classList.toggle('onboarding-backdrop--no-bg', step.targetSelector !== null);
+
     const shortcut = deps.getShortcutDisplay();
 
     // Build tooltip content based on step

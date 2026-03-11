@@ -827,6 +827,11 @@ a {
   opacity: 1;
 }
 
+.onboarding-backdrop--no-bg {
+  background: transparent;
+  backdrop-filter: none;
+}
+
 .onboarding-spotlight {
   position: fixed;
   z-index: 1001;
