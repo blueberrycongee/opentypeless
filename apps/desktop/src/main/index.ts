@@ -37,7 +37,8 @@ function createMainWindow(): BrowserWindow {
     minWidth: 1040,
     minHeight: 720,
     title: 'OpenTypeless',
-    backgroundColor: '#f3efe5',
+    backgroundColor: '#f7f6f3',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : undefined,
     autoHideMenuBar: true,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
