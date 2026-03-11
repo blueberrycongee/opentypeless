@@ -1,0 +1,305 @@
+:root {
+  /* ── Surface ─────────────────────────────────── */
+  --ov-bg: rgba(28, 28, 30, 0.82);
+  --ov-border: rgba(255, 255, 255, 0.08);
+  --ov-shadow: 0 8px 32px rgba(0, 0, 0, 0.32),
+               0 2px 8px rgba(0, 0, 0, 0.2);
+  --ov-blur: blur(40px) saturate(180%);
+
+  /* ── Text ────────────────────────────────────── */
+  --ov-text-primary: rgba(255, 255, 255, 0.92);
+  --ov-text-secondary: rgba(255, 255, 255, 0.55);
+  --ov-text-tertiary: rgba(255, 255, 255, 0.3);
+
+  /* ── Accent — recording indicator dot ONLY ──── */
+  --ov-accent: #FF6363;
+
+  /* ── Glass button ──────────────────────────── */
+  --ov-btn-bg: rgba(255, 255, 255, 0.1);
+  --ov-btn-bg-hover: rgba(255, 255, 255, 0.16);
+  --ov-btn-bg-active: rgba(255, 255, 255, 0.08);
+  --ov-btn-text: rgba(255, 255, 255, 0.88);
+
+  /* ── Progress bar ──────────────────────────── */
+  --ov-progress-track: rgba(255, 255, 255, 0.08);
+  --ov-progress-fill: rgba(255, 255, 255, 0.28);
+
+  /* ── Keyboard hint badge ───────────────────── */
+  --ov-kbd-bg: rgba(255, 255, 255, 0.06);
+  --ov-kbd-text: rgba(255, 255, 255, 0.3);
+  --ov-kbd-border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+/* ── Overlay container ──────────────────────────── */
+
+.overlay-container {
+  width: 280px;
+  border-radius: 16px;
+  background: var(--ov-bg);
+  backdrop-filter: var(--ov-blur);
+  -webkit-backdrop-filter: var(--ov-blur);
+  border: 1px solid var(--ov-border);
+  box-shadow: var(--ov-shadow);
+  overflow: hidden;
+  transition: opacity 180ms ease-out, transform 180ms ease-out, height 200ms ease;
+}
+
+.overlay-container.entering {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.overlay-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.overlay-container.exiting {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
+}
+
+/* ── Recording state ────────────────────────────── */
+
+.state-recording {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+}
+
+/* ── Recording indicator dot ────────────────────── */
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ov-accent);
+  animation: breathe 2s ease-in-out infinite;
+  flex: none;
+}
+
+/* ── Timer ──────────────────────────────────────── */
+
+.ov-timer {
+  flex: none;
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ov-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-spacer {
+  flex: 1;
+}
+
+/* ── Keyboard hint badge ────────────────────────── */
+
+.kbd-badge {
+  flex: none;
+  background: var(--ov-kbd-bg);
+  border: 1px solid var(--ov-kbd-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ov-kbd-text);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.kbd-badge:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Glass button ───────────────────────────────── */
+
+.glass-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ov-btn-bg);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ov-btn-text);
+  cursor: pointer;
+  transition: background 120ms ease;
+  margin-left: 8px;
+}
+
+.glass-btn:hover {
+  background: var(--ov-btn-bg-hover);
+}
+
+.glass-btn:active {
+  background: var(--ov-btn-bg-active);
+}
+
+.stop-icon {
+  width: 8px;
+  height: 8px;
+  border-radius: 1.5px;
+  background: var(--ov-btn-text);
+}
+
+/* ── Processing state ───────────────────────────── */
+
+.state-processing {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  gap: 10px;
+}
+
+.step-label-wrapper {
+  position: relative;
+  height: 18px;
+}
+
+.step-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ov-text-secondary);
+  transition: opacity 150ms ease;
+}
+
+.step-label.entering {
+  opacity: 0;
+}
+
+.step-label.visible {
+  opacity: 1;
+}
+
+.step-label.exiting {
+  opacity: 0;
+}
+
+/* ── Progress bar ───────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+.progress-bar {
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--ov-progress-track);
+  overflow: hidden;
+}
+
+.progress-shimmer {
+  height: 100%;
+  width: 40%;
+  border-radius: 1.5px;
+  background: var(--ov-progress-fill);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Success state ──────────────────────────────── */
+
+.state-success {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+}
+
+@keyframes check-draw {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes check-appear {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.checkmark {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  animation: check-appear 300ms ease-out forwards;
+}
+
+.checkmark path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: check-draw 300ms ease-out 50ms forwards;
+}
+
+.success-label {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ov-text-primary);
+}
+
+/* ── Error state ────────────────────────────────── */
+
+.state-error {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+}
+
+.error-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ov-text-primary);
+}
+
+.error-detail {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ov-text-tertiary);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.error-actions .glass-btn {
+  margin-left: 0;
+}
