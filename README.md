@@ -1,5 +1,9 @@
 # OpenTypeless
 
+[![CI](https://github.com/blueberrycongee/opentypeless/actions/workflows/ci.yml/badge.svg)](https://github.com/blueberrycongee/opentypeless/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D24-brightgreen.svg)](.nvmrc)
+
 OpenTypeless is a desktop-first open source AI dictation layer.
 It is inspired by the workflow benchmark set by Typeless, but aims to be built in the open with a transparent product and architecture process.
 
@@ -50,6 +54,17 @@ This repository now includes an initial runnable Electron desktop shell and a fu
 - a local STT + rewrite pipeline using `whisper.cpp` and `MLX-LM`
 - GitHub community and contribution files
 
+## Quickstart
+
+```bash
+git clone https://github.com/blueberrycongee/opentypeless.git
+cd opentypeless/apps/desktop
+npm install
+npm run start
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full development setup.
+
 ## Initial feature benchmark
 
 The first benchmark for OpenTypeless is a reliable desktop MVP with:
@@ -65,7 +80,7 @@ The first benchmark for OpenTypeless is a reliable desktop MVP with:
 ## Repository map
 
 ```text
-.github/                      GitHub community files and templates
+.github/                      GitHub community files, CI workflows, and templates
 apps/desktop/                 desktop application workspace
 assets/                       logos, icons, screenshots, and brand files
 docs/architecture/            system and platform design notes
