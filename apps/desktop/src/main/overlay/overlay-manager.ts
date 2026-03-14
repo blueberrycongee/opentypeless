@@ -40,7 +40,6 @@ export interface OverlayManager {
 export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
   let window: OverlayWindow | null = null;
   let active = false;
-  let currentState: OverlayState = { kind: 'hidden' };
   let processingSteps: OverlayStateProcessing['steps'] = [];
   let actionHandler: ((action: OverlayAction) => void) | null = null;
   let successTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -53,7 +52,6 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
   }
 
   function pushState(state: OverlayState): void {
-    currentState = state;
     const win = getWindow();
     win.sendState(state);
   }

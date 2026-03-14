@@ -47,6 +47,7 @@ let mainWindow: BrowserWindow | null = null;
 let overlayManager: OverlayManager | null = null;
 let pendingCancel = false;
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
