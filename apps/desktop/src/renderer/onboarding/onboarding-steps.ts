@@ -16,29 +16,29 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
     page: null,
     targetSelector: null,
     tooltipPosition: 'center',
-    i18nPrefix: 'onboarding.welcome'
+    i18nPrefix: 'onboarding.welcome',
   },
   {
     id: 'permissions',
     page: 'settings',
     targetSelector: '[data-onboarding="permissions"]',
     tooltipPosition: 'bottom',
-    i18nPrefix: 'onboarding.permissions'
+    i18nPrefix: 'onboarding.permissions',
   },
   {
     id: 'shortcuts',
     page: 'home',
     targetSelector: '.rec-card',
     tooltipPosition: 'bottom',
-    i18nPrefix: 'onboarding.shortcuts'
+    i18nPrefix: 'onboarding.shortcuts',
   },
   {
     id: 'tryit',
     page: 'home',
     targetSelector: null,
     tooltipPosition: 'center',
-    i18nPrefix: 'onboarding.tryit'
-  }
+    i18nPrefix: 'onboarding.tryit',
+  },
 ];
 
 export const STORAGE_KEY = 'onboarding-completed';

@@ -49,7 +49,7 @@ export function unmountOverlay(elements: OverlayElements): void {
 
 export function positionSpotlight(
   spotlight: HTMLDivElement,
-  targetSelector: string | null
+  targetSelector: string | null,
 ): DOMRect | null {
   if (!targetSelector) {
     spotlight.classList.remove('onboarding-spotlight--visible');
@@ -75,7 +75,7 @@ export function positionSpotlight(
 export function positionTooltip(
   tooltip: HTMLDivElement,
   position: TooltipPosition,
-  spotlightRect: DOMRect | null
+  spotlightRect: DOMRect | null,
 ): void {
   tooltip.style.maxWidth = `${TOOLTIP_MAX_WIDTH}px`;
 
@@ -95,7 +95,7 @@ export function positionTooltip(
     bottom: spotlightRect.bottom + SPOTLIGHT_PADDING,
     right: spotlightRect.right + SPOTLIGHT_PADDING,
     width: spotlightRect.width + SPOTLIGHT_PADDING * 2,
-    height: spotlightRect.height + SPOTLIGHT_PADDING * 2
+    height: spotlightRect.height + SPOTLIGHT_PADDING * 2,
   };
 
   switch (position) {
@@ -134,17 +134,21 @@ export function renderTooltipContent(opts: {
   stepIndex: number;
   totalSteps: number;
 }): string {
-  const dots = Array.from({ length: opts.totalSteps }, (_, i) =>
-    `<span class="onboarding-dot${i === opts.stepIndex ? ' onboarding-dot--active' : ''}"></span>`
+  const dots = Array.from(
+    { length: opts.totalSteps },
+    (_, i) =>
+      `<span class="onboarding-dot${i === opts.stepIndex ? ' onboarding-dot--active' : ''}"></span>`,
   ).join('');
 
-  const primaryBtn = opts.primaryLabel && opts.onPrimary
-    ? `<button class="btn btn-primary btn-sm" data-onboarding-action="primary">${opts.primaryLabel}</button>`
-    : '';
+  const primaryBtn =
+    opts.primaryLabel && opts.onPrimary
+      ? `<button class="btn btn-primary btn-sm" data-onboarding-action="primary">${opts.primaryLabel}</button>`
+      : '';
 
-  const skipBtn = opts.skipLabel && opts.onSkip
-    ? `<button class="btn btn-ghost btn-sm" data-onboarding-action="skip">${opts.skipLabel}</button>`
-    : '';
+  const skipBtn =
+    opts.skipLabel && opts.onSkip
+      ? `<button class="btn btn-ghost btn-sm" data-onboarding-action="skip">${opts.skipLabel}</button>`
+      : '';
 
   return `
     <div class="onboarding-tooltip-content">
@@ -167,12 +171,15 @@ export function bindTooltipActions(
     onPrimary?: () => void;
     onSkip?: () => void;
     onSkipAll: () => void;
-  }
+  },
 ): void {
-  tooltip.querySelector('[data-onboarding-action="primary"]')
+  tooltip
+    .querySelector('[data-onboarding-action="primary"]')
     ?.addEventListener('click', () => handlers.onPrimary?.());
-  tooltip.querySelector('[data-onboarding-action="skip"]')
+  tooltip
+    .querySelector('[data-onboarding-action="skip"]')
     ?.addEventListener('click', () => handlers.onSkip?.());
-  tooltip.querySelector('[data-onboarding-action="skip-all"]')
+  tooltip
+    .querySelector('[data-onboarding-action="skip-all"]')
     ?.addEventListener('click', () => handlers.onSkipAll());
 }

@@ -32,15 +32,15 @@ async function main(): Promise<void> {
     '1',
     '-c:a',
     'pcm_s16le',
-    wavPath
+    wavPath,
   ]);
 
   const pipeline = createDictationPipeline(root, createLocalAiPipelineDeps(root));
-  const audioBytes = [...await readFile(wavPath)];
+  const audioBytes = [...(await readFile(wavPath))];
   const saved = await pipeline.saveCapturedAudio({
     audioBytes,
     durationMs: null,
-    mimeType: 'audio/wav'
+    mimeType: 'audio/wav',
   });
   const processed = await pipeline.processSession(saved.id);
   const sentMessages = await pipeline.listSentMessages();
@@ -54,14 +54,20 @@ async function main(): Promise<void> {
   assert.equal(sentMessages.length, 1);
   assert.equal(sentMessages[0].text, processed.delivery?.deliveredText);
 
-  console.log(JSON.stringify({
-    sessionId: processed.id,
-    transcript: processed.transcript?.text,
-    rewrittenText: processed.rewrite?.text,
-    deliveredText: processed.delivery?.deliveredText,
-    outboxSize: sentMessages.length,
-    dataRoot: root
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        sessionId: processed.id,
+        transcript: processed.transcript?.text,
+        rewrittenText: processed.rewrite?.text,
+        deliveredText: processed.delivery?.deliveredText,
+        outboxSize: sentMessages.length,
+        dataRoot: root,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 void main();

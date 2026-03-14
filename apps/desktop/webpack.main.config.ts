@@ -6,14 +6,14 @@ import { rules } from './webpack.rules';
 export const mainConfig: Configuration = {
   entry: './src/main/index.ts',
   module: {
-    rules
+    rules,
   },
   plugins,
   resolve: {
     extensions: ['.js', '.ts', '.css', '.json'],
     alias: {
       '@main': __dirname + '/src/main',
-      '@shared': __dirname + '/src/shared'
-    }
-  }
+      '@shared': __dirname + '/src/shared',
+    },
+  },
 };

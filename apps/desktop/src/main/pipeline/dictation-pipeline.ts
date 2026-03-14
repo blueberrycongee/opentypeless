@@ -2,20 +2,34 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { DeliveryResult, DictationSession, SaveCapturedAudioInput, SentMessage } from '../../shared/ipc';
+import type {
+  DeliveryResult,
+  DictationSession,
+  SaveCapturedAudioInput,
+  SentMessage,
+} from '../../shared/ipc';
 
 export type PipelineProgressStep = 'transcribing' | 'rewriting' | 'inserting';
 
 export interface DictationPipelineDeps {
-  transcribeAudio?: (audioRelativePath: string, session: DictationSession) => Promise<{
+  transcribeAudio?: (
+    audioRelativePath: string,
+    session: DictationSession,
+  ) => Promise<{
     transcript: string;
     normalizedAudioRelativePath: string | null;
     model?: string;
   }>;
-  rewriteTranscript?: (transcript: string, session: DictationSession) => Promise<{
-    text: string;
-    model?: string;
-  } | string>;
+  rewriteTranscript?: (
+    transcript: string,
+    session: DictationSession,
+  ) => Promise<
+    | {
+        text: string;
+        model?: string;
+      }
+    | string
+  >;
   simulateSend?: (message: string, session: DictationSession) => Promise<DeliveryResult>;
   onProgress?: (step: PipelineProgressStep) => void;
   now?: () => string;
@@ -35,7 +49,10 @@ const OUTBOX_DIR = 'outbox';
 const OUTBOX_FILE = 'messages.json';
 const SESSION_DIR = 'sessions';
 
-export function createDictationPipeline(dataRoot: string, deps: DictationPipelineDeps = {}): DictationPipeline {
+export function createDictationPipeline(
+  dataRoot: string,
+  deps: DictationPipelineDeps = {},
+): DictationPipeline {
   const now = deps.now ?? (() => new Date().toISOString());
 
   return {
@@ -62,19 +79,19 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
           fileName,
           mimeType: input.mimeType,
           relativePath,
-          normalizedRelativePath: null
+          normalizedRelativePath: null,
         },
         pipeline: {
           capture: 'completed',
           storage: 'completed',
           transcription: 'pending',
           rewrite: 'pending',
-          send: 'pending'
+          send: 'pending',
         },
         transcript: null,
         rewrite: null,
         delivery: null,
-        error: null
+        error: null,
       };
 
       await writeFile(join(dataRoot, relativePath), Buffer.from(input.audioBytes));
@@ -100,8 +117,8 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
           ...existing.pipeline,
           transcription: 'running',
           rewrite: 'pending',
-          send: 'pending'
-        }
+          send: 'pending',
+        },
       };
       await persistSession(dataRoot, session);
 
@@ -112,37 +129,38 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
           ...session,
           audio: {
             ...session.audio,
-            normalizedRelativePath: transcription.normalizedAudioRelativePath
+            normalizedRelativePath: transcription.normalizedAudioRelativePath,
           },
           transcript: {
             text: transcription.transcript,
             model: transcription.model ?? 'local-stt',
-            completedAt: now()
+            completedAt: now(),
           },
           pipeline: {
             ...session.pipeline,
             transcription: 'completed',
-            rewrite: 'running'
-          }
+            rewrite: 'running',
+          },
         };
         await persistSession(dataRoot, session);
 
         deps.onProgress?.('rewriting');
         const rewritten = await deps.rewriteTranscript(transcription.transcript, session);
         const rewrittenText = typeof rewritten === 'string' ? rewritten : rewritten.text;
-        const rewrittenModel = typeof rewritten === 'string' ? 'local-rewrite' : rewritten.model ?? 'local-rewrite';
+        const rewrittenModel =
+          typeof rewritten === 'string' ? 'local-rewrite' : (rewritten.model ?? 'local-rewrite');
         session = {
           ...session,
           rewrite: {
             text: rewrittenText,
             model: rewrittenModel,
-            completedAt: now()
+            completedAt: now(),
           },
           pipeline: {
             ...session.pipeline,
             rewrite: 'completed',
-            send: 'running'
-          }
+            send: 'running',
+          },
         };
         await persistSession(dataRoot, session);
 
@@ -153,15 +171,15 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
           delivery,
           pipeline: {
             ...session.pipeline,
-            send: 'completed'
-          }
+            send: 'completed',
+          },
         };
         await persistSession(dataRoot, session);
         await appendOutbox(dataRoot, {
           sessionId: session.id,
           text: delivery.deliveredText,
           channel: delivery.channel,
-          deliveredAt: delivery.deliveredAt
+          deliveredAt: delivery.deliveredAt,
         });
 
         return session;
@@ -172,10 +190,13 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
           error: message,
           pipeline: {
             ...session.pipeline,
-            transcription: session.pipeline.transcription === 'running' ? 'failed' : session.pipeline.transcription,
+            transcription:
+              session.pipeline.transcription === 'running'
+                ? 'failed'
+                : session.pipeline.transcription,
             rewrite: session.pipeline.rewrite === 'running' ? 'failed' : session.pipeline.rewrite,
-            send: session.pipeline.send === 'running' ? 'failed' : session.pipeline.send
-          }
+            send: session.pipeline.send === 'running' ? 'failed' : session.pipeline.send,
+          },
         };
         await persistSession(dataRoot, session);
         throw error;
@@ -197,7 +218,7 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
           .map(async (name) => {
             const contents = await readFile(join(dataRoot, SESSION_DIR, name), 'utf8');
             return JSON.parse(contents) as DictationSession;
-          })
+          }),
       );
 
       return manifests.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -206,7 +227,7 @@ export function createDictationPipeline(dataRoot: string, deps: DictationPipelin
     async listSentMessages(): Promise<SentMessage[]> {
       await ensureStorage(dataRoot);
       return readOutbox(dataRoot);
-    }
+    },
   };
 }
 
@@ -215,12 +236,15 @@ async function ensureStorage(dataRoot: string): Promise<void> {
     mkdir(join(dataRoot, AUDIO_DIR), { recursive: true }),
     mkdir(join(dataRoot, DERIVED_DIR), { recursive: true }),
     mkdir(join(dataRoot, OUTBOX_DIR), { recursive: true }),
-    mkdir(join(dataRoot, SESSION_DIR), { recursive: true })
+    mkdir(join(dataRoot, SESSION_DIR), { recursive: true }),
   ]);
 }
 
 async function persistSession(dataRoot: string, session: DictationSession): Promise<void> {
-  await writeFile(join(dataRoot, SESSION_DIR, `${session.id}.json`), `${JSON.stringify(session, null, 2)}\n`);
+  await writeFile(
+    join(dataRoot, SESSION_DIR, `${session.id}.json`),
+    `${JSON.stringify(session, null, 2)}\n`,
+  );
 }
 
 async function readSession(dataRoot: string, sessionId: string): Promise<DictationSession | null> {
@@ -244,7 +268,10 @@ async function readOutbox(dataRoot: string): Promise<SentMessage[]> {
 async function appendOutbox(dataRoot: string, sentMessage: SentMessage): Promise<void> {
   const existing = await readOutbox(dataRoot);
   existing.unshift(sentMessage);
-  await writeFile(join(dataRoot, OUTBOX_DIR, OUTBOX_FILE), `${JSON.stringify(existing, null, 2)}\n`);
+  await writeFile(
+    join(dataRoot, OUTBOX_DIR, OUTBOX_FILE),
+    `${JSON.stringify(existing, null, 2)}\n`,
+  );
 }
 
 function extensionForMimeType(mimeType: string): string {

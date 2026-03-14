@@ -21,7 +21,7 @@ export function createMacOsDesktopIntegration(): DesktopIntegration {
     getPermissionState(): DesktopPermissionState {
       return {
         microphone: systemPreferences.getMediaAccessStatus('microphone'),
-        accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? 'granted' : 'denied'
+        accessibility: systemPreferences.isTrustedAccessibilityClient(false) ? 'granted' : 'denied',
       };
     },
 
@@ -46,7 +46,7 @@ export function createMacOsDesktopIntegration(): DesktopIntegration {
         'tell application "System Events"',
         '  set frontApp to first application process whose frontmost is true',
         '  return (name of frontApp) & "||" & (bundle identifier of frontApp) & "||" & (unix id of frontApp as text)',
-        'end tell'
+        'end tell',
       ].join('\n');
 
       try {
@@ -66,7 +66,7 @@ export function createMacOsDesktopIntegration(): DesktopIntegration {
         'delay 0.2',
         'tell application "System Events"',
         '  keystroke "v" using command down',
-        'end tell'
+        'end tell',
       ].join('\n');
 
       try {
@@ -76,7 +76,7 @@ export function createMacOsDesktopIntegration(): DesktopIntegration {
           clipboard.writeText(previousClipboard);
         }, 800);
       }
-    }
+    },
   };
 }
 
@@ -84,7 +84,11 @@ function escapeAppleScriptString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-export function parseDetectedTargetApp(stdout: string, currentPid: number, currentAppName = 'OpenTypeless'): TargetApp | null {
+export function parseDetectedTargetApp(
+  stdout: string,
+  currentPid: number,
+  currentAppName = 'OpenTypeless',
+): TargetApp | null {
   const [appName, bundleId, pidText] = stdout.trim().split('||');
   const targetPid = Number(pidText);
 

@@ -45,8 +45,8 @@ function createMockDeps(): OverlayManagerDeps & {
       },
       isDestroyed() {
         return mock.destroyed;
-      }
-    })
+      },
+    }),
   };
   return mock;
 }

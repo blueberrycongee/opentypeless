@@ -6,6 +6,6 @@ export function buildRuntimeInfo(platform: NodeJS.Platform): RuntimeInfo {
   return {
     appName: 'OpenTypeless',
     platform,
-    modules: plannedModules
+    modules: plannedModules,
   };
 }

@@ -11,7 +11,7 @@ test('buildRuntimeInfo returns app shell metadata and module placeholders', () =
   assert.equal(info.modules.length, 6);
   assert.deepEqual(
     info.modules.map((module) => module.id),
-    ['hotkeys', 'audio', 'transcription', 'rewrite', 'insertion', 'local-data']
+    ['hotkeys', 'audio', 'transcription', 'rewrite', 'insertion', 'local-data'],
   );
   assert.equal(info.modules.find((module) => module.id === 'audio')?.status, 'ready');
   assert.equal(info.modules.find((module) => module.id === 'transcription')?.status, 'ready');

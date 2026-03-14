@@ -16,5 +16,5 @@ We will acknowledge reports within 7 days and aim to provide a fix or mitigation
 ## Supported versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | latest  | Yes       |

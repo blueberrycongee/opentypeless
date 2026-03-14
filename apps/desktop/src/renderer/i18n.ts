@@ -21,7 +21,7 @@ function detectLocale(): Locale {
 
 const resources = {
   en: { translation: en },
-  'zh-CN': { translation: zhCN }
+  'zh-CN': { translation: zhCN },
 };
 
 i18next.init({
@@ -30,8 +30,8 @@ i18next.init({
   supportedLngs: [...SUPPORTED],
   resources,
   interpolation: {
-    escapeValue: false
-  }
+    escapeValue: false,
+  },
 });
 
 export const t = i18next.t.bind(i18next);

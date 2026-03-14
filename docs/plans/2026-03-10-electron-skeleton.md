@@ -13,6 +13,7 @@
 ### Task 1: Replace the placeholder app directory with an Electron Forge app
 
 **Files:**
+
 - Create: `apps/desktop/package.json`
 - Create: `apps/desktop/forge.config.ts`
 - Create: `apps/desktop/tsconfig.json`
@@ -43,6 +44,7 @@ Expected: Dev build succeeds and the Electron shell opens.
 ### Task 2: Add a typed IPC seam and architecture placeholders with TDD
 
 **Files:**
+
 - Create: `apps/desktop/src/shared/ipc.ts`
 - Create: `apps/desktop/src/main/core/runtime-info.ts`
 - Create: `apps/desktop/src/main/core/runtime-info.test.ts`
@@ -68,6 +70,7 @@ Expected: PASS.
 ### Task 3: Add baseline quality checks and project guidance
 
 **Files:**
+
 - Create: `apps/desktop/jest.config.ts`
 - Create: `apps/desktop/jest.setup.ts`
 - Modify: `apps/desktop/package.json`

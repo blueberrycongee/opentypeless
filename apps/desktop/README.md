@@ -14,6 +14,7 @@ This workspace contains the first runnable Electron shell for OpenTypeless.
 ## Current scope
 
 The desktop shell now supports a full local verification path:
+
 - microphone capture in the renderer via `MediaRecorder`
 - raw audio persistence and session manifests under the app data directory
 - audio normalization with `ffmpeg`

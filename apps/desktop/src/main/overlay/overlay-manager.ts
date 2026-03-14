@@ -3,7 +3,7 @@ import type {
   OverlayState,
   OverlayStateProcessing,
   OverlayStep,
-  OverlayStepStatus
+  OverlayStepStatus,
 } from '../../shared/ipc';
 
 const ALL_STEPS: OverlayStep[] = ['transcribing', 'rewriting', 'inserting'];
@@ -72,7 +72,7 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
       const win = getWindow();
       const state: OverlayState = {
         kind: 'recording',
-        startedAtIso: new Date().toISOString()
+        startedAtIso: new Date().toISOString(),
       };
       pushState(state);
       win.setHeight(44);
@@ -83,7 +83,7 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
       processingSteps = ALL_STEPS.map((id) => ({ id, status: 'pending' as OverlayStepStatus }));
       const state: OverlayState = {
         kind: 'processing',
-        steps: [...processingSteps]
+        steps: [...processingSteps],
       };
       pushState(state);
       getWindow().setHeight(56);
@@ -94,11 +94,11 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
       processingSteps = ALL_STEPS.map((id, i) => {
         if (i < stepIndex) return { id, status: 'done' as OverlayStepStatus };
         if (i === stepIndex) return { id, status };
-        return { id, status: processingSteps[i]?.status ?? 'pending' as OverlayStepStatus };
+        return { id, status: processingSteps[i]?.status ?? ('pending' as OverlayStepStatus) };
       });
       const state: OverlayState = {
         kind: 'processing',
-        steps: [...processingSteps]
+        steps: [...processingSteps],
       };
       pushState(state);
     },
@@ -106,7 +106,7 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
     transitionToSuccess(targetAppName: string | null): void {
       const state: OverlayState = {
         kind: 'success',
-        targetAppName
+        targetAppName,
       };
       pushState(state);
       getWindow().setHeight(44);
@@ -118,7 +118,7 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
     transitionToError(message: string): void {
       const state: OverlayState = {
         kind: 'error',
-        message
+        message,
       };
       pushState(state);
       getWindow().setHeight(80);
@@ -162,6 +162,6 @@ export function createOverlayManager(deps: OverlayManagerDeps): OverlayManager {
         window.destroy();
       }
       window = null;
-    }
+    },
   };
 }

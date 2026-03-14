@@ -95,6 +95,7 @@ Transitions:
 ```
 
 The controller:
+
 - Manages current step state
 - Triggers page navigation (calls existing `navigateTo()` to switch between Home/Settings)
 - Subscribes to IPC events for Step 4 (recording start, pipeline complete)
@@ -117,12 +118,12 @@ Each step is a plain object:
 ```typescript
 interface OnboardingStep {
   id: string;
-  page: 'home' | 'settings' | null;  // null = no navigation
-  targetSelector: string | null;       // null = centered (no spotlight)
+  page: 'home' | 'settings' | null; // null = no navigation
+  targetSelector: string | null; // null = centered (no spotlight)
   tooltipPosition: 'bottom' | 'right' | 'left' | 'top';
-  i18nPrefix: string;                  // e.g. 'onboarding.welcome'
+  i18nPrefix: string; // e.g. 'onboarding.welcome'
   canSkip: boolean;
-  autoAdvance?: (onAdvance: () => void) => () => void;  // returns cleanup fn
+  autoAdvance?: (onAdvance: () => void) => () => void; // returns cleanup fn
 }
 ```
 

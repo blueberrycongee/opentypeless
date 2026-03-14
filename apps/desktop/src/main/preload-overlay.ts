@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-import { ipcChannels, type OverlayAction, type OverlayBridge, type OverlayState } from '../shared/ipc';
+import {
+  ipcChannels,
+  type OverlayAction,
+  type OverlayBridge,
+  type OverlayState,
+} from '../shared/ipc';
 
 const bridge: OverlayBridge = {
   onState: (callback: (state: OverlayState) => void) => {
@@ -12,7 +17,7 @@ const bridge: OverlayBridge = {
   },
   sendAction: (action: OverlayAction) => {
     ipcRenderer.send(ipcChannels.overlayAction, action);
-  }
+  },
 };
 
 contextBridge.exposeInMainWorld('overlayBridge', bridge);

@@ -2,8 +2,7 @@
   /* ── Surface ─────────────────────────────────── */
   --ov-bg: rgba(28, 28, 30, 0.82);
   --ov-border: rgba(255, 255, 255, 0.08);
-  --ov-shadow: 0 8px 32px rgba(0, 0, 0, 0.32),
-               0 2px 8px rgba(0, 0, 0, 0.2);
+  --ov-shadow: 0 8px 32px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.2);
   --ov-blur: blur(40px) saturate(180%);
 
   /* ── Text ────────────────────────────────────── */
@@ -12,7 +11,7 @@
   --ov-text-tertiary: rgba(255, 255, 255, 0.3);
 
   /* ── Accent — recording indicator dot ONLY ──── */
-  --ov-accent: #FF6363;
+  --ov-accent: #ff6363;
 
   /* ── Glass button ──────────────────────────── */
   --ov-btn-bg: rgba(255, 255, 255, 0.1);
@@ -57,7 +56,10 @@ body {
   border: 1px solid var(--ov-border);
   box-shadow: var(--ov-shadow);
   overflow: hidden;
-  transition: opacity 180ms ease-out, transform 180ms ease-out, height 200ms ease;
+  transition:
+    opacity 180ms ease-out,
+    transform 180ms ease-out,
+    height 200ms ease;
 }
 
 .overlay-container.entering {
@@ -89,8 +91,13 @@ body {
 /* ── Recording indicator dot ────────────────────── */
 
 @keyframes breathe {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .rec-dot {
@@ -211,8 +218,12 @@ body {
 /* ── Progress bar ───────────────────────────────── */
 
 @keyframes shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(350%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }
 
 .progress-bar {
@@ -240,14 +251,26 @@ body {
 }
 
 @keyframes check-draw {
-  from { stroke-dashoffset: 20; }
-  to   { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 @keyframes check-appear {
-  0%   { transform: scale(0.5); opacity: 0; }
-  60%  { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .checkmark {

@@ -4,7 +4,12 @@ import { t } from '../i18n';
 import type { OverlayState, OverlayStep } from '../../shared/ipc';
 
 function stepLabel(step: OverlayStep): string {
-  const key = step === 'transcribing' ? 'overlay.transcribing' : step === 'rewriting' ? 'overlay.rewriting' : 'overlay.inserting';
+  const key =
+    step === 'transcribing'
+      ? 'overlay.transcribing'
+      : step === 'rewriting'
+        ? 'overlay.rewriting'
+        : 'overlay.inserting';
   return t(key);
 }
 
@@ -170,9 +175,13 @@ function bindActions(): void {
     });
   });
 
-  root.addEventListener('mousedown', () => {
-    window.overlayBridge.sendAction({ kind: 'request-focus' });
-  }, { once: true });
+  root.addEventListener(
+    'mousedown',
+    () => {
+      window.overlayBridge.sendAction({ kind: 'request-focus' });
+    },
+    { once: true },
+  );
 }
 
 // ── Keyboard handling ──────────────────────────────────────────────

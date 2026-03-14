@@ -8,6 +8,7 @@ It is directional, not a promise.
 Goal: define the product clearly before implementation expands.
 
 Focus:
+
 - competitor benchmark research
 - desktop-only scope definition
 - architecture framing
@@ -18,6 +19,7 @@ Focus:
 Goal: prove the core desktop workflow end to end.
 
 Target capabilities:
+
 - global shortcut to start dictation
 - microphone selection
 - audio capture pipeline
@@ -29,6 +31,7 @@ Target capabilities:
 - basic settings and privacy controls
 
 Success signals:
+
 - works reliably in common desktop text fields
 - output is materially better than raw transcription
 - system state is visible and predictable
@@ -38,6 +41,7 @@ Success signals:
 Goal: move beyond dictation into system-wide voice editing.
 
 Target capabilities:
+
 - selected-text editing
 - translation mode
 - app-specific style or tone profiles
@@ -50,6 +54,7 @@ Target capabilities:
 Goal: support broader knowledge-work actions while staying desktop-first.
 
 Target capabilities:
+
 - ask about selected text
 - optional web lookup mode
 - Markdown-aware output where useful

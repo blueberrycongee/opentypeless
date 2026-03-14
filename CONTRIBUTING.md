@@ -21,18 +21,18 @@ npm run start
 
 From `apps/desktop/`:
 
-| Command | Purpose |
-|---------|---------|
-| `npm run start` | Launch Electron dev build |
-| `npm run test` | Run unit tests |
-| `npm run lint` | Run ESLint |
+| Command             | Purpose                      |
+| ------------------- | ---------------------------- |
+| `npm run start`     | Launch Electron dev build    |
+| `npm run test`      | Run unit tests               |
+| `npm run lint`      | Run ESLint                   |
 | `npm run typecheck` | Run TypeScript type checking |
 
 From the repo root:
 
-| Command | Purpose |
-|---------|---------|
-| `npm run format` | Format all files with Prettier |
+| Command                | Purpose                          |
+| ---------------------- | -------------------------------- |
+| `npm run format`       | Format all files with Prettier   |
 | `npm run format:check` | Check formatting without writing |
 
 ## Before you start

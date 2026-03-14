@@ -11,6 +11,7 @@ It is inspired by the workflow benchmark set by Typeless, but aims to be built i
 
 OpenTypeless is not only speech-to-text.
 The target experience is:
+
 - trigger dictation from anywhere on desktop
 - capture audio with low friction
 - transcribe speech into text
@@ -27,6 +28,7 @@ capture -> transcribe -> rewrite -> insert -> remember -> improve
 ## Product scope
 
 Current scope is desktop only:
+
 - macOS first
 - Windows second
 - no mobile client in the first phase
@@ -34,10 +36,12 @@ Current scope is desktop only:
 ## Why this project exists
 
 Most voice input tools fall into one of two buckets:
+
 - plain dictation tools that stop at transcription
 - closed commercial assistants that do more, but are hard to inspect, extend, or self-host
 
 OpenTypeless aims to explore a third path:
+
 - open source by default
 - desktop-first UX
 - privacy-aware architecture
@@ -47,6 +51,7 @@ OpenTypeless aims to explore a third path:
 ## Current status
 
 This repository now includes an initial runnable Electron desktop shell and a fully local macOS-first AI pipeline for capture, transcription, rewrite, and simulated send. The repository currently contains:
+
 - product definition notes
 - competitor research
 - initial architecture framing
@@ -68,6 +73,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full development setup.
 ## Initial feature benchmark
 
 The first benchmark for OpenTypeless is a reliable desktop MVP with:
+
 - global shortcut invocation
 - microphone selection
 - speech-to-text pipeline
@@ -95,6 +101,7 @@ SUPPORT.md                    support and communication guidance
 ## Recommended reading order
 
 If you are new to the project, start here:
+
 1. `README.md`
 2. `ROADMAP.md`
 3. `docs/product/vision.md`

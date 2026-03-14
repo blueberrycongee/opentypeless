@@ -13,6 +13,7 @@
 ### Task 1: Add root package.json
 
 **Files:**
+
 - Create: `package.json`
 
 **Step 1: Create root package.json**
@@ -26,9 +27,7 @@
   "engines": {
     "node": ">=24"
   },
-  "workspaces": [
-    "apps/desktop"
-  ],
+  "workspaces": ["apps/desktop"],
   "scripts": {
     "lint": "npm run lint --workspace=apps/desktop",
     "typecheck": "npm run typecheck --workspace=apps/desktop",
@@ -51,6 +50,7 @@ git commit -m "chore: add root package.json with workspace config"
 ### Task 2: Add .nvmrc
 
 **Files:**
+
 - Create: `.nvmrc`
 
 **Step 1: Create .nvmrc**
@@ -71,6 +71,7 @@ git commit -m "chore: add .nvmrc to pin Node.js 24"
 ### Task 3: Add Prettier config
 
 **Files:**
+
 - Create: `.prettierrc`
 - Create: `.prettierignore`
 
@@ -112,6 +113,7 @@ git commit -m "chore: add Prettier config and ignore file"
 ### Task 4: Add CI workflow
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 **Step 1: Create CI workflow**
@@ -179,6 +181,7 @@ git commit -m "ci: add lint, typecheck, test, and format check workflow"
 ### Task 5: Add Dependabot config
 
 **Files:**
+
 - Create: `.github/dependabot.yml`
 
 **Step 1: Create dependabot.yml**
@@ -195,7 +198,7 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "chore(deps):"
+      prefix: 'chore(deps):'
 
   - package-ecosystem: github-actions
     directory: /
@@ -206,7 +209,7 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "ci(deps):"
+      prefix: 'ci(deps):'
 ```
 
 **Step 2: Commit**
@@ -221,6 +224,7 @@ git commit -m "ci: add Dependabot config for npm and GitHub Actions"
 ### Task 6: Add Dependabot auto-merge workflow
 
 **Files:**
+
 - Create: `.github/workflows/dependabot-automerge.yml`
 
 **Step 1: Create auto-merge workflow**
@@ -264,6 +268,7 @@ git commit -m "ci: add Dependabot auto-merge for patch updates"
 ### Task 7: Add FUNDING.yml
 
 **Files:**
+
 - Create: `.github/FUNDING.yml`
 
 **Step 1: Create FUNDING.yml**
@@ -284,6 +289,7 @@ git commit -m "chore: add GitHub Sponsors funding config"
 ### Task 8: Improve SECURITY.md
 
 **Files:**
+
 - Modify: `SECURITY.md`
 
 **Step 1: Update SECURITY.md to use GitHub Private Vulnerability Reporting**
@@ -307,7 +313,7 @@ We will acknowledge reports within 7 days and aim to provide a fix or mitigation
 ## Supported versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | latest  | Yes       |
 ```
 
@@ -323,11 +329,12 @@ git commit -m "docs: improve SECURITY.md with private reporting link"
 ### Task 9: Improve CONTRIBUTING.md
 
 **Files:**
+
 - Modify: `CONTRIBUTING.md`
 
 **Step 1: Update CONTRIBUTING.md with dev setup instructions**
 
-```markdown
+````markdown
 # Contributing
 
 Thanks for contributing to OpenTypeless.
@@ -346,23 +353,24 @@ cd opentypeless/apps/desktop
 npm install
 npm run start
 ```
+````
 
 ## Development commands
 
 From `apps/desktop/`:
 
-| Command | Purpose |
-|---------|---------|
-| `npm run start` | Launch Electron dev build |
-| `npm run test` | Run unit tests |
-| `npm run lint` | Run ESLint |
+| Command             | Purpose                      |
+| ------------------- | ---------------------------- |
+| `npm run start`     | Launch Electron dev build    |
+| `npm run test`      | Run unit tests               |
+| `npm run lint`      | Run ESLint                   |
 | `npm run typecheck` | Run TypeScript type checking |
 
 From the repo root:
 
-| Command | Purpose |
-|---------|---------|
-| `npm run format` | Format all files with Prettier |
+| Command                | Purpose                          |
+| ---------------------- | -------------------------------- |
+| `npm run format`       | Format all files with Prettier   |
 | `npm run format:check` | Check formatting without writing |
 
 ## Before you start
@@ -396,20 +404,22 @@ This project uses [Prettier](https://prettier.io/) for formatting and [ESLint](h
 ## Communication
 
 Be respectful, specific, and collaborative.
-```
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add CONTRIBUTING.md
 git commit -m "docs: improve CONTRIBUTING.md with dev setup and commands"
-```
+````
 
 ---
 
 ### Task 10: Update README.md with badges and quickstart
 
 **Files:**
+
 - Modify: `README.md`
 
 **Step 1: Add badges and quickstart section to README.md**
@@ -426,7 +436,7 @@ Add badges after the `# OpenTypeless` heading:
 
 Add a Quickstart section after "Current status":
 
-```markdown
+````markdown
 ## Quickstart
 
 ```bash
@@ -435,22 +445,25 @@ cd opentypeless/apps/desktop
 npm install
 npm run start
 ```
+````
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full development setup.
-```
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add README.md
 git commit -m "docs: add badges and quickstart to README"
-```
+````
 
 ---
 
 ### Task 11: Update .gitignore
 
 **Files:**
+
 - Modify: `.gitignore`
 
 **Step 1: Append additional entries**

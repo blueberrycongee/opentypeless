@@ -19,5 +19,11 @@
       "@shared/*": ["src/shared/*"]
     }
   },
-  "include": ["src/**/*", "forge.config.ts", "webpack.*.config.ts", "webpack.plugins.ts", "webpack.rules.ts"]
+  "include": [
+    "src/**/*",
+    "forge.config.ts",
+    "webpack.*.config.ts",
+    "webpack.plugins.ts",
+    "webpack.rules.ts"
+  ]
 }

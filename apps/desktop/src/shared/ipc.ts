@@ -13,12 +13,17 @@ export const ipcChannels = {
   recordingCommand: 'recording:command',
   desktopAttention: 'desktop:attention',
   overlayState: 'overlay:state',
-  overlayAction: 'overlay:action'
+  overlayAction: 'overlay:action',
 } as const;
 
 export type ModuleStatus = 'planned' | 'ready' | 'blocked';
 export type PipelineStageStatus = 'pending' | 'running' | 'completed' | 'failed';
-export type MicrophonePermissionStatus = 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown';
+export type MicrophonePermissionStatus =
+  | 'not-determined'
+  | 'granted'
+  | 'denied'
+  | 'restricted'
+  | 'unknown';
 export type AccessibilityPermissionStatus = 'granted' | 'denied';
 export type RecordingCommand = 'start' | 'stop' | 'cancel';
 export type DesktopPermissionKind = 'microphone' | 'accessibility';

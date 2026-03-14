@@ -14,15 +14,10 @@ import { rendererConfig } from './webpack.renderer.config';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    name: 'OpenTypeless'
+    name: 'OpenTypeless',
   },
   rebuildConfig: {},
-  makers: [
-    new MakerSquirrel({}),
-    new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({})
-  ],
+  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
@@ -35,19 +30,19 @@ const config: ForgeConfig = {
             js: './src/renderer/index.ts',
             name: 'main_window',
             preload: {
-              js: './src/main/preload.ts'
-            }
+              js: './src/main/preload.ts',
+            },
           },
           {
             html: './src/renderer/overlay/index.html',
             js: './src/renderer/overlay/index.ts',
             name: 'overlay',
             preload: {
-              js: './src/main/preload-overlay.ts'
-            }
-          }
-        ]
-      }
+              js: './src/main/preload-overlay.ts',
+            },
+          },
+        ],
+      },
     }),
     new FusesPlugin({
       version: FuseVersion.V1,
@@ -56,9 +51,9 @@ const config: ForgeConfig = {
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true
-    })
-  ]
+      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+    }),
+  ],
 };
 
 export default config;

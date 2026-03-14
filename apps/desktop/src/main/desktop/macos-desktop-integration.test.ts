@@ -8,7 +8,7 @@ test('parseDetectedTargetApp returns an external frontmost app', () => {
 
   assert.deepEqual(target, {
     appName: 'TextEdit',
-    bundleId: 'com.apple.TextEdit'
+    bundleId: 'com.apple.TextEdit',
   });
 });
 

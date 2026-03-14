@@ -12,6 +12,7 @@ Raw transcripts are often noisy, awkward, and not ready to send.
 ## The product promise
 
 OpenTypeless should let a user speak into any desktop workflow and receive text that is:
+
 - cleaner than raw transcription
 - appropriate for the current task
 - easy to trust and revise
@@ -28,6 +29,7 @@ OpenTypeless should let a user speak into any desktop workflow and receive text 
 ## What success looks like
 
 A user should be able to:
+
 - open any common desktop app
 - trigger dictation with one shortcut
 - speak naturally, including pauses and self-corrections

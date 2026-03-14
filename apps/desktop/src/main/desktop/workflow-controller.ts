@@ -10,19 +10,25 @@ export interface WorkflowProcessedSession {
   } | null;
 }
 
-export interface WorkflowControllerDeps<TSession extends WorkflowProcessedSession = WorkflowProcessedSession> {
+export interface WorkflowControllerDeps<
+  TSession extends WorkflowProcessedSession = WorkflowProcessedSession,
+> {
   detectTargetApp: () => Promise<TargetApp | null>;
   processSession: (sessionId: string) => Promise<TSession>;
   insertText: (text: string, target: TargetApp) => Promise<void>;
 }
 
-export interface WorkflowCompletionResult<TSession extends WorkflowProcessedSession = WorkflowProcessedSession> {
+export interface WorkflowCompletionResult<
+  TSession extends WorkflowProcessedSession = WorkflowProcessedSession,
+> {
   inserted: boolean;
   processed: TSession;
   target: TargetApp | null;
 }
 
-export interface WorkflowController<TSession extends WorkflowProcessedSession = WorkflowProcessedSession> {
+export interface WorkflowController<
+  TSession extends WorkflowProcessedSession = WorkflowProcessedSession,
+> {
   beginCapture: () => Promise<TargetApp | null>;
   getActiveTarget: () => TargetApp | null;
   processAndInsertSession: (sessionId: string) => Promise<WorkflowCompletionResult<TSession>>;
@@ -30,7 +36,7 @@ export interface WorkflowController<TSession extends WorkflowProcessedSession = 
 }
 
 export function createWorkflowController<TSession extends WorkflowProcessedSession>(
-  deps: WorkflowControllerDeps<TSession>
+  deps: WorkflowControllerDeps<TSession>,
 ): WorkflowController<TSession> {
   let activeTarget: TargetApp | null = null;
 
@@ -54,14 +60,14 @@ export function createWorkflowController<TSession extends WorkflowProcessedSessi
           return {
             inserted: true,
             processed,
-            target
+            target,
           };
         }
 
         return {
           inserted: false,
           processed,
-          target
+          target,
         };
       } finally {
         activeTarget = null;
@@ -70,6 +76,6 @@ export function createWorkflowController<TSession extends WorkflowProcessedSessi
 
     reset(): void {
       activeTarget = null;
-    }
+    },
   };
 }

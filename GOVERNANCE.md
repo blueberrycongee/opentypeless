@@ -10,6 +10,7 @@ Contributors are encouraged to propose changes through issues, discussions, and 
 ## How decisions should be made
 
 We prefer decisions that improve:
+
 - desktop product clarity
 - correctness and maintainability
 - privacy transparency
@@ -19,6 +20,7 @@ We prefer decisions that improve:
 ## What requires discussion first
 
 Open an issue or discussion before making large changes to:
+
 - product scope
 - desktop architecture direction
 - storage formats with migration impact
@@ -28,6 +30,7 @@ Open an issue or discussion before making large changes to:
 ## Maintainer expectations
 
 Maintainers should:
+
 - explain major decisions clearly
 - keep the roadmap current enough to be useful
 - review contributions in good faith

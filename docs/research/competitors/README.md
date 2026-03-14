@@ -9,6 +9,7 @@ This folder stores competitor and benchmark research for OpenTypeless.
 ## Research format
 
 Use the `research-card-v1` structure when possible:
+
 - snapshot
 - capability cards
 - architecture inference

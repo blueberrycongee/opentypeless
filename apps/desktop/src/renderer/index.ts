@@ -12,13 +12,13 @@ import type {
   PipelineStageStatus,
   RecordingCommand,
   RuntimeInfo,
-  SentMessage
+  SentMessage,
 } from '../shared/ipc';
 import {
   createOnboardingController,
   isOnboardingCompleted,
   clearOnboardingCompleted,
-  type OnboardingController
+  type OnboardingController,
 } from './onboarding/onboarding-controller';
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ const state: AppState = {
   sentMessages: [],
   statusMessage: null,
   stream: null,
-  timerInterval: null
+  timerInterval: null,
 };
 
 let statusTimeoutId: number | null = null;
@@ -121,7 +121,7 @@ function pipelineBadge(label: string, status: PipelineStageStatus): string {
     pending: 'badge-neutral',
     running: 'badge-blue',
     completed: 'badge-green',
-    failed: 'badge-red'
+    failed: 'badge-red',
   };
   return `<span class="badge ${cls[status]}">${label}</span>`;
 }
@@ -434,7 +434,7 @@ function renderSettings(): string {
           </div>
           ${moduleStatusBadge(m.status)}
         </div>
-      `
+      `,
         )
         .join('')}
     </div>
@@ -487,7 +487,11 @@ function renderSessionItem(session: DictationSession): string {
     : '';
   const error = session.error ? `<p class="session-error">${escapeHtml(session.error)}</p>` : '';
 
-  const btnLabel = isBusy ? t('session.processing') : isComplete ? t('session.done') : t('session.runPipeline');
+  const btnLabel = isBusy
+    ? t('session.processing')
+    : isComplete
+      ? t('session.done')
+      : t('session.runPipeline');
 
   return `
     <div class="session-item">
@@ -519,7 +523,7 @@ function renderContent(): string {
     home: renderHome,
     history: renderHistory,
     dictionary: renderDictionary,
-    settings: renderSettings
+    settings: renderSettings,
   };
   return `<main class="content"><div class="content-inner">${views[state.view]()}</div></main>`;
 }
@@ -557,13 +561,17 @@ function bindUi(): void {
     void requestAccessibilityPermission();
   });
 
-  document.querySelector('[data-action="open-microphone-settings"]')?.addEventListener('click', () => {
-    void openPermissionSettings('microphone');
-  });
+  document
+    .querySelector('[data-action="open-microphone-settings"]')
+    ?.addEventListener('click', () => {
+      void openPermissionSettings('microphone');
+    });
 
-  document.querySelector('[data-action="open-accessibility-settings"]')?.addEventListener('click', () => {
-    void openPermissionSettings('accessibility');
-  });
+  document
+    .querySelector('[data-action="open-accessibility-settings"]')
+    ?.addEventListener('click', () => {
+      void openPermissionSettings('accessibility');
+    });
 
   document.querySelectorAll<HTMLButtonElement>('[data-action="process-session"]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -617,7 +625,7 @@ async function refreshAll(): Promise<void> {
   const [desktop, sessions, sentMessages] = await Promise.all([
     window.opentypeless.getDesktopStatus(),
     window.opentypeless.listDictationSessions(),
-    window.opentypeless.listSentMessages()
+    window.opentypeless.listSentMessages(),
   ]);
   state.desktop = desktop;
   state.sessions = sessions;
@@ -630,7 +638,7 @@ async function requestMicrophonePermission(): Promise<void> {
   const granted = await window.opentypeless.requestMicrophonePermission();
   setStatus(
     granted ? t('status.microphoneGranted') : t('status.microphoneUnavailable'),
-    granted ? 'success' : 'warning'
+    granted ? 'success' : 'warning',
   );
   await refreshAll();
 }
@@ -639,7 +647,7 @@ async function requestAccessibilityPermission(): Promise<void> {
   const granted = await window.opentypeless.requestAccessibilityPermission();
   setStatus(
     granted ? t('status.accessibilityGranted') : t('status.accessibilityUnavailable'),
-    granted ? 'success' : 'warning'
+    granted ? 'success' : 'warning',
   );
   await refreshAll();
 }
@@ -662,7 +670,10 @@ async function processSession(sessionId: string): Promise<void> {
     state.sentMessages = await window.opentypeless.listSentMessages();
     setStatus(t('status.pipelineCompleted', { fileName: processed.audio.fileName }), 'success');
   } catch (err) {
-    setStatus(t('status.pipelineFailed', { message: err instanceof Error ? err.message : String(err) }), 'error');
+    setStatus(
+      t('status.pipelineFailed', { message: err instanceof Error ? err.message : String(err) }),
+      'error',
+    );
   } finally {
     state.busySessionId = null;
     render();
@@ -707,7 +718,10 @@ async function startRecording(source: 'manual' | 'shortcut'): Promise<void> {
     render();
     startTimer();
   } catch (err) {
-    setStatus(t('status.microphoneError', { message: err instanceof Error ? err.message : String(err) }), 'error');
+    setStatus(
+      t('status.microphoneError', { message: err instanceof Error ? err.message : String(err) }),
+      'error',
+    );
     render();
   }
 }
@@ -727,7 +741,7 @@ async function finalizeRecording(chunks: Blob[], mimeType: string): Promise<void
     const saved = await window.opentypeless.saveCapturedAudio({
       audioBytes: bytes,
       durationMs: state.recordingStartedAt ? Date.now() - state.recordingStartedAt : null,
-      mimeType: blob.type || mimeType
+      mimeType: blob.type || mimeType,
     });
 
     stopStream();
@@ -749,7 +763,10 @@ async function finalizeRecording(chunks: Blob[], mimeType: string): Promise<void
     state.recordingStartedAt = null;
     state.recordingElapsed = 0;
     state.busySessionId = null;
-    setStatus(t('status.recordingFailed', { message: err instanceof Error ? err.message : String(err) }), 'error');
+    setStatus(
+      t('status.recordingFailed', { message: err instanceof Error ? err.message : String(err) }),
+      'error',
+    );
     render();
   }
 }
@@ -759,7 +776,10 @@ function applyCompletionResult(result: CompleteDictationResult): void {
   state.busySessionId = null;
 
   if (result.inserted) {
-    setStatus(t('status.inserted', { app: result.targetAppName ?? t('status.focusedApp') }), 'success');
+    setStatus(
+      t('status.inserted', { app: result.targetAppName ?? t('status.focusedApp') }),
+      'success',
+    );
   } else {
     setStatus(t('status.noTargetApp'), 'warning');
   }
@@ -795,14 +815,18 @@ function stopStream(): void {
 }
 
 function pickMimeType(): string {
-  return ['audio/webm;codecs=opus', 'audio/webm'].find((c) => MediaRecorder.isTypeSupported(c)) ?? '';
+  return (
+    ['audio/webm;codecs=opus', 'audio/webm'].find((c) => MediaRecorder.isTypeSupported(c)) ?? ''
+  );
 }
 
 // ── IPC event handlers ─────────────────────────────────────────────
 
 function describeMissingPermissions(missing: DesktopPermissionKind[]): string {
   if (missing.length === 2) return t('status.permissionsBoth');
-  return missing[0] === 'microphone' ? t('status.permissionsMicrophone') : t('status.permissionsAccessibility');
+  return missing[0] === 'microphone'
+    ? t('status.permissionsMicrophone')
+    : t('status.permissionsAccessibility');
 }
 
 async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<void> {
@@ -812,7 +836,10 @@ async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<voi
   }
   if (event.kind !== 'permission-required') return;
   state.view = 'home';
-  setStatus(t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }), 'warning');
+  setStatus(
+    t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }),
+    'warning',
+  );
   await refreshAll();
 }
 
@@ -840,7 +867,7 @@ function startOnboarding(): void {
       return () => {
         pipelineCompleteCallbacks = pipelineCompleteCallbacks.filter((cb) => cb !== callback);
       };
-    }
+    },
   });
   onboardingController.start();
 }
@@ -848,9 +875,9 @@ function startOnboarding(): void {
 function showPermissionLostModal(missing: DesktopPermissionKind[]): void {
   if (document.querySelector('.perm-modal-backdrop')) return;
 
-  const permNames = missing.map((k) =>
-    k === 'microphone' ? t('settings.microphone') : t('settings.accessibility')
-  ).join(', ');
+  const permNames = missing
+    .map((k) => (k === 'microphone' ? t('settings.microphone') : t('settings.accessibility')))
+    .join(', ');
 
   const backdrop = document.createElement('div');
   backdrop.className = 'perm-modal-backdrop';
@@ -889,7 +916,7 @@ async function boot(): Promise<void> {
     window.opentypeless.getRuntimeInfo(),
     window.opentypeless.getDesktopStatus(),
     window.opentypeless.listDictationSessions(),
-    window.opentypeless.listSentMessages()
+    window.opentypeless.listSentMessages(),
   ]);
   state.info = info;
   state.desktop = desktop;

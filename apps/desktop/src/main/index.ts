@@ -5,7 +5,11 @@ import { createLocalAiPipelineDeps } from './ai/local-ai';
 import { buildRuntimeInfo } from './core/runtime-info';
 import { createMacOsDesktopIntegration } from './desktop/macos-desktop-integration';
 import { createWorkflowController } from './desktop/workflow-controller';
-import { createOverlayManager, type OverlayManager, type OverlayWindow } from './overlay/overlay-manager';
+import {
+  createOverlayManager,
+  type OverlayManager,
+  type OverlayWindow,
+} from './overlay/overlay-manager';
 import { createDictationPipeline } from './pipeline/dictation-pipeline';
 import type { PipelineProgressStep } from './pipeline/dictation-pipeline';
 import {
@@ -17,7 +21,7 @@ import {
   type OverlayAction,
   type OverlayStep,
   type RecordingCommand,
-  type SaveCapturedAudioInput
+  type SaveCapturedAudioInput,
 } from '../shared/ipc';
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
@@ -27,7 +31,7 @@ declare const OVERLAY_PRELOAD_WEBPACK_ENTRY: string;
 
 const shortcuts = {
   startRecording: 'CommandOrControl+Shift+;',
-  stopRecording: 'CommandOrControl+Shift+\''
+  stopRecording: "CommandOrControl+Shift+'",
 } as const;
 
 const OVERLAY_WIDTH = 280;
@@ -36,7 +40,7 @@ const OVERLAY_TOP_OFFSET = 64;
 const PIPELINE_STEP_MAP: Record<PipelineProgressStep, OverlayStep> = {
   transcribing: 'transcribing',
   rewriting: 'rewriting',
-  inserting: 'inserting'
+  inserting: 'inserting',
 };
 
 let mainWindow: BrowserWindow | null = null;
@@ -61,8 +65,8 @@ function createMainWindow(): BrowserWindow {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
-    }
+      sandbox: false,
+    },
   });
 
   void window.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
@@ -111,8 +115,8 @@ function createOverlayBrowserWindow(): OverlayWindow {
       preload: OVERLAY_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
-    }
+      sandbox: false,
+    },
   });
 
   void win.loadURL(OVERLAY_WEBPACK_ENTRY);
@@ -151,7 +155,7 @@ function createOverlayBrowserWindow(): OverlayWindow {
     },
     isDestroyed() {
       return win.isDestroyed();
-    }
+    },
   };
 }
 
@@ -159,7 +163,7 @@ function registerIpcHandlers(): void {
   const dataRoot = join(app.getPath('userData'), 'dictation');
 
   const overlay = createOverlayManager({
-    createWindow: createOverlayBrowserWindow
+    createWindow: createOverlayBrowserWindow,
   });
   overlayManager = overlay;
 
@@ -170,14 +174,14 @@ function registerIpcHandlers(): void {
       if (overlay.isActive()) {
         overlay.updateProcessingStep(PIPELINE_STEP_MAP[step], 'active');
       }
-    }
+    },
   });
 
   const desktop = createMacOsDesktopIntegration();
   const workflow = createWorkflowController({
     detectTargetApp: desktop.detectTargetApp,
     processSession: (sessionId) => pipeline.processSession(sessionId),
-    insertText: desktop.insertTextIntoTarget
+    insertText: desktop.insertTextIntoTarget,
   });
 
   ipcMain.on(ipcChannels.overlayAction, (_event, action: OverlayAction) => {
@@ -202,7 +206,9 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(ipcChannels.getRuntimeInfo, () => buildRuntimeInfo(process.platform));
-  ipcMain.handle(ipcChannels.getDesktopStatus, () => buildDesktopStatus(desktop, workflow, overlay));
+  ipcMain.handle(ipcChannels.getDesktopStatus, () =>
+    buildDesktopStatus(desktop, workflow, overlay),
+  );
   ipcMain.handle(ipcChannels.requestMicrophonePermission, async () => {
     const granted = await desktop.requestMicrophonePermission();
     getMainWindow().show();
@@ -213,12 +219,20 @@ function registerIpcHandlers(): void {
     getMainWindow().show();
     return granted;
   });
-  ipcMain.handle(ipcChannels.openPermissionSettings, (_event, kind: DesktopPermissionKind) => desktop.openPermissionSettings(kind));
+  ipcMain.handle(ipcChannels.openPermissionSettings, (_event, kind: DesktopPermissionKind) =>
+    desktop.openPermissionSettings(kind),
+  );
   ipcMain.handle(ipcChannels.listDictationSessions, () => pipeline.listSessions());
-  ipcMain.handle(ipcChannels.getDictationSession, (_event, sessionId: string) => pipeline.getSession(sessionId));
+  ipcMain.handle(ipcChannels.getDictationSession, (_event, sessionId: string) =>
+    pipeline.getSession(sessionId),
+  );
   ipcMain.handle(ipcChannels.listSentMessages, () => pipeline.listSentMessages());
-  ipcMain.handle(ipcChannels.saveCapturedAudio, (_event, input: SaveCapturedAudioInput) => pipeline.saveCapturedAudio(input));
-  ipcMain.handle(ipcChannels.processDictationSession, (_event, sessionId: string) => pipeline.processSession(sessionId));
+  ipcMain.handle(ipcChannels.saveCapturedAudio, (_event, input: SaveCapturedAudioInput) =>
+    pipeline.saveCapturedAudio(input),
+  );
+  ipcMain.handle(ipcChannels.processDictationSession, (_event, sessionId: string) =>
+    pipeline.processSession(sessionId),
+  );
   ipcMain.handle(ipcChannels.completeDictationSession, async (_event, sessionId: string) => {
     if (pendingCancel) {
       pendingCancel = false;
@@ -226,7 +240,7 @@ function registerIpcHandlers(): void {
       return {
         inserted: false,
         targetAppName: null,
-        processed: session!
+        processed: session!,
       } satisfies CompleteDictationResult;
     }
 
@@ -237,7 +251,7 @@ function registerIpcHandlers(): void {
       const completionResult = {
         inserted: result.inserted,
         targetAppName: result.target?.appName ?? null,
-        processed: result.processed
+        processed: result.processed,
       } satisfies CompleteDictationResult;
 
       overlay.transitionToSuccess(completionResult.targetAppName);
@@ -255,7 +269,7 @@ function registerIpcHandlers(): void {
 function registerGlobalShortcuts(
   desktop: ReturnType<typeof createMacOsDesktopIntegration>,
   workflow: ReturnType<typeof createWorkflowController>,
-  overlay: OverlayManager
+  overlay: OverlayManager,
 ): void {
   globalShortcut.unregisterAll();
 
@@ -273,7 +287,7 @@ function registerGlobalShortcuts(
       window.focus();
       sendDesktopAttention(window, {
         kind: 'permission-required',
-        missing
+        missing,
       });
       return;
     }
@@ -317,13 +331,13 @@ function getMissingPermissions(permissions: DesktopStatus['permissions']): Deskt
 function buildDesktopStatus(
   desktop: ReturnType<typeof createMacOsDesktopIntegration>,
   workflow: ReturnType<typeof createWorkflowController>,
-  overlay: OverlayManager
+  overlay: OverlayManager,
 ): DesktopStatus {
   return {
     permissions: desktop.getPermissionState(),
     shortcuts,
     activeTargetAppName: workflow.getActiveTarget()?.appName ?? null,
-    overlayActive: overlay.isActive()
+    overlayActive: overlay.isActive(),
   };
 }
 

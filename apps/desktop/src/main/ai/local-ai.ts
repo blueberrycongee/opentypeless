@@ -26,12 +26,18 @@ export function defaultLocalAiConfig(): LocalAiConfig {
       process.env.OPENTYPELESS_WHISPER_MODEL ??
       join(homedir(), '.cache', 'opentypeless', 'models', 'whisper', 'ggml-base.en.bin'),
     pythonBin: process.env.OPENTYPELESS_PYTHON_BIN ?? join(process.cwd(), '.venv', 'bin', 'python'),
-    rewriteScriptPath: process.env.OPENTYPELESS_REWRITE_SCRIPT ?? join(process.cwd(), 'scripts', 'rewrite_with_mlx.py'),
-    rewriteModel: process.env.OPENTYPELESS_REWRITE_MODEL ?? 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
+    rewriteScriptPath:
+      process.env.OPENTYPELESS_REWRITE_SCRIPT ??
+      join(process.cwd(), 'scripts', 'rewrite_with_mlx.py'),
+    rewriteModel:
+      process.env.OPENTYPELESS_REWRITE_MODEL ?? 'mlx-community/Qwen2.5-0.5B-Instruct-4bit',
   };
 }
 
-export function createLocalAiPipelineDeps(dataRoot: string, config: LocalAiConfig = defaultLocalAiConfig()): DictationPipelineDeps {
+export function createLocalAiPipelineDeps(
+  dataRoot: string,
+  config: LocalAiConfig = defaultLocalAiConfig(),
+): DictationPipelineDeps {
   return {
     transcribeAudio: async (audioRelativePath, session) => {
       await ensureLocalAiReady(config);
@@ -54,13 +60,23 @@ export function createLocalAiPipelineDeps(dataRoot: string, config: LocalAiConfi
         '1',
         '-c:a',
         'pcm_s16le',
-        normalizedAudioPath
+        normalizedAudioPath,
       ]);
 
       await execFileAsync(
         config.whisperCliBin,
-        ['-m', config.whisperModelPath, '-l', 'en', '-nt', '-otxt', '-of', outputPrefix, normalizedAudioPath],
-        { maxBuffer: 16 * 1024 * 1024 }
+        [
+          '-m',
+          config.whisperModelPath,
+          '-l',
+          'en',
+          '-nt',
+          '-otxt',
+          '-of',
+          outputPrefix,
+          normalizedAudioPath,
+        ],
+        { maxBuffer: 16 * 1024 * 1024 },
       );
 
       const transcriptPath = `${outputPrefix}.txt`;
@@ -69,7 +85,7 @@ export function createLocalAiPipelineDeps(dataRoot: string, config: LocalAiConfi
       return {
         transcript,
         normalizedAudioRelativePath: relative(dataRoot, normalizedAudioPath),
-        model: `whisper.cpp:${config.whisperModelPath.split('/').pop() ?? 'model'}`
+        model: `whisper.cpp:${config.whisperModelPath.split('/').pop() ?? 'model'}`,
       };
     },
 
@@ -79,30 +95,47 @@ export function createLocalAiPipelineDeps(dataRoot: string, config: LocalAiConfi
       const { stdout } = await execFileAsync(
         config.pythonBin,
         [config.rewriteScriptPath, '--model', config.rewriteModel, '--text', transcript],
-        { maxBuffer: 16 * 1024 * 1024 }
+        { maxBuffer: 16 * 1024 * 1024 },
       );
 
       return {
         text: normalizeRewriteText(stdout),
-        model: `mlx-lm:${config.rewriteModel}`
+        model: `mlx-lm:${config.rewriteModel}`,
       };
     },
 
     simulateSend: async (message): Promise<DeliveryResult> => ({
       channel: 'simulated-chat',
       deliveredText: message.trim(),
-      deliveredAt: new Date().toISOString()
-    })
+      deliveredAt: new Date().toISOString(),
+    }),
   };
 }
 
-export async function ensureLocalAiReady(config: LocalAiConfig = defaultLocalAiConfig()): Promise<void> {
+export async function ensureLocalAiReady(
+  config: LocalAiConfig = defaultLocalAiConfig(),
+): Promise<void> {
   await Promise.all([
-    ensureExecutable(config.ffmpegBin, ['-version'], 'ffmpeg is required. Run `npm run ai:setup` in apps/desktop.'),
-    ensureExecutable(config.whisperCliBin, ['--help'], 'whisper.cpp is required. Run `npm run ai:setup` in apps/desktop.'),
-    ensureExecutable(config.pythonBin, ['--version'], 'Local Python runtime is required. Run `npm run ai:setup` in apps/desktop.'),
-    ensureFile(config.whisperModelPath, `Whisper model missing at ${config.whisperModelPath}. Run \`npm run ai:setup\` in apps/desktop.`),
-    ensureFile(config.rewriteScriptPath, `Rewrite script missing at ${config.rewriteScriptPath}.`)
+    ensureExecutable(
+      config.ffmpegBin,
+      ['-version'],
+      'ffmpeg is required. Run `npm run ai:setup` in apps/desktop.',
+    ),
+    ensureExecutable(
+      config.whisperCliBin,
+      ['--help'],
+      'whisper.cpp is required. Run `npm run ai:setup` in apps/desktop.',
+    ),
+    ensureExecutable(
+      config.pythonBin,
+      ['--version'],
+      'Local Python runtime is required. Run `npm run ai:setup` in apps/desktop.',
+    ),
+    ensureFile(
+      config.whisperModelPath,
+      `Whisper model missing at ${config.whisperModelPath}. Run \`npm run ai:setup\` in apps/desktop.`,
+    ),
+    ensureFile(config.rewriteScriptPath, `Rewrite script missing at ${config.rewriteScriptPath}.`),
   ]);
 }
 

@@ -148,7 +148,9 @@ a {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
-  transition: background 80ms ease, color 80ms ease;
+  transition:
+    background 80ms ease,
+    color 80ms ease;
   -webkit-app-region: no-drag;
 }
 
@@ -332,7 +334,9 @@ a {
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 500;
-  transition: background 80ms ease, transform 80ms ease;
+  transition:
+    background 80ms ease,
+    transform 80ms ease;
   white-space: nowrap;
 }
 
@@ -841,7 +845,12 @@ a {
     0 0 0 9999px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   opacity: 0;
-  transition: top 300ms ease, left 300ms ease, width 300ms ease, height 300ms ease, opacity 200ms ease;
+  transition:
+    top 300ms ease,
+    left 300ms ease,
+    width 300ms ease,
+    height 300ms ease,
+    opacity 200ms ease;
 }
 
 .onboarding-spotlight--visible {
@@ -858,7 +867,11 @@ a {
   max-width: 360px;
   opacity: 0;
   pointer-events: auto;
-  transition: opacity 200ms ease, top 300ms ease, left 300ms ease, transform 300ms ease;
+  transition:
+    opacity 200ms ease,
+    top 300ms ease,
+    left 300ms ease,
+    transform 300ms ease;
 }
 
 .onboarding-tooltip--visible {

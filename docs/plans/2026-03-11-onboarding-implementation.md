@@ -13,6 +13,7 @@
 ## Task 1: Add i18n strings for onboarding
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/locales/en.json`
 - Modify: `apps/desktop/src/renderer/locales/zh-CN.json`
 
@@ -100,6 +101,7 @@ git commit -m "feat(i18n): add onboarding and permission-loss locale strings"
 ## Task 2: Create onboarding step definitions
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/onboarding/onboarding-steps.ts`
 
 **Step 1: Write the step definitions module**
@@ -123,29 +125,29 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
     page: null,
     targetSelector: null,
     tooltipPosition: 'center',
-    i18nPrefix: 'onboarding.welcome'
+    i18nPrefix: 'onboarding.welcome',
   },
   {
     id: 'permissions',
     page: 'settings',
     targetSelector: '.settings-group:nth-child(2) .card',
     tooltipPosition: 'bottom',
-    i18nPrefix: 'onboarding.permissions'
+    i18nPrefix: 'onboarding.permissions',
   },
   {
     id: 'shortcuts',
     page: 'home',
     targetSelector: '.rec-card',
     tooltipPosition: 'bottom',
-    i18nPrefix: 'onboarding.shortcuts'
+    i18nPrefix: 'onboarding.shortcuts',
   },
   {
     id: 'tryit',
     page: 'home',
     targetSelector: null,
     tooltipPosition: 'center',
-    i18nPrefix: 'onboarding.tryit'
-  }
+    i18nPrefix: 'onboarding.tryit',
+  },
 ];
 
 export const STORAGE_KEY = 'onboarding-completed';
@@ -163,6 +165,7 @@ git commit -m "feat(onboarding): add step definitions"
 ## Task 3: Create onboarding overlay DOM renderer
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/onboarding/onboarding-overlay.ts`
 
 This module handles all DOM creation and positioning for the overlay elements (backdrop, spotlight, tooltip).
@@ -221,7 +224,7 @@ export function unmountOverlay(elements: OverlayElements): void {
 
 export function positionSpotlight(
   spotlight: HTMLDivElement,
-  targetSelector: string | null
+  targetSelector: string | null,
 ): DOMRect | null {
   if (!targetSelector) {
     spotlight.classList.remove('onboarding-spotlight--visible');
@@ -247,7 +250,7 @@ export function positionSpotlight(
 export function positionTooltip(
   tooltip: HTMLDivElement,
   position: TooltipPosition,
-  spotlightRect: DOMRect | null
+  spotlightRect: DOMRect | null,
 ): void {
   tooltip.style.maxWidth = `${TOOLTIP_MAX_WIDTH}px`;
 
@@ -267,7 +270,7 @@ export function positionTooltip(
     bottom: spotlightRect.bottom + SPOTLIGHT_PADDING,
     right: spotlightRect.right + SPOTLIGHT_PADDING,
     width: spotlightRect.width + SPOTLIGHT_PADDING * 2,
-    height: spotlightRect.height + SPOTLIGHT_PADDING * 2
+    height: spotlightRect.height + SPOTLIGHT_PADDING * 2,
   };
 
   switch (position) {
@@ -306,17 +309,21 @@ export function renderTooltipContent(opts: {
   stepIndex: number;
   totalSteps: number;
 }): string {
-  const dots = Array.from({ length: opts.totalSteps }, (_, i) =>
-    `<span class="onboarding-dot${i === opts.stepIndex ? ' onboarding-dot--active' : ''}"></span>`
+  const dots = Array.from(
+    { length: opts.totalSteps },
+    (_, i) =>
+      `<span class="onboarding-dot${i === opts.stepIndex ? ' onboarding-dot--active' : ''}"></span>`,
   ).join('');
 
-  const primaryBtn = opts.primaryLabel && opts.onPrimary
-    ? `<button class="btn btn-primary btn-sm" data-onboarding-action="primary">${opts.primaryLabel}</button>`
-    : '';
+  const primaryBtn =
+    opts.primaryLabel && opts.onPrimary
+      ? `<button class="btn btn-primary btn-sm" data-onboarding-action="primary">${opts.primaryLabel}</button>`
+      : '';
 
-  const skipBtn = opts.skipLabel && opts.onSkip
-    ? `<button class="btn btn-ghost btn-sm" data-onboarding-action="skip">${opts.skipLabel}</button>`
-    : '';
+  const skipBtn =
+    opts.skipLabel && opts.onSkip
+      ? `<button class="btn btn-ghost btn-sm" data-onboarding-action="skip">${opts.skipLabel}</button>`
+      : '';
 
   return `
     <div class="onboarding-tooltip-content">
@@ -339,13 +346,16 @@ export function bindTooltipActions(
     onPrimary?: () => void;
     onSkip?: () => void;
     onSkipAll: () => void;
-  }
+  },
 ): void {
-  tooltip.querySelector('[data-onboarding-action="primary"]')
+  tooltip
+    .querySelector('[data-onboarding-action="primary"]')
     ?.addEventListener('click', () => handlers.onPrimary?.());
-  tooltip.querySelector('[data-onboarding-action="skip"]')
+  tooltip
+    .querySelector('[data-onboarding-action="skip"]')
     ?.addEventListener('click', () => handlers.onSkip?.());
-  tooltip.querySelector('[data-onboarding-action="skip-all"]')
+  tooltip
+    .querySelector('[data-onboarding-action="skip-all"]')
     ?.addEventListener('click', () => handlers.onSkipAll());
 }
 ```
@@ -362,6 +372,7 @@ git commit -m "feat(onboarding): add overlay DOM renderer with spotlight and too
 ## Task 4: Create onboarding controller (state machine)
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/onboarding/onboarding-controller.ts`
 
 **Step 1: Write the controller**
@@ -378,13 +389,9 @@ import {
   positionTooltip,
   renderTooltipContent,
   bindTooltipActions,
-  type OverlayElements
+  type OverlayElements,
 } from './onboarding-overlay';
-import {
-  ONBOARDING_STEPS,
-  STORAGE_KEY,
-  type OnboardingStepId
-} from './onboarding-steps';
+import { ONBOARDING_STEPS, STORAGE_KEY, type OnboardingStepId } from './onboarding-steps';
 import type { DesktopStatus, RecordingCommand } from '../../shared/ipc';
 
 export interface OnboardingControllerDeps {
@@ -427,9 +434,7 @@ export function clearOnboardingCompleted(): void {
   }
 }
 
-export function createOnboardingController(
-  deps: OnboardingControllerDeps
-): OnboardingController {
+export function createOnboardingController(deps: OnboardingControllerDeps): OnboardingController {
   let stepIndex = -1;
   let elements: OverlayElements | null = null;
   let permissionPollTimer: number | null = null;
@@ -536,7 +541,7 @@ export function createOnboardingController(
     primaryLabel: string | null,
     onPrimary: (() => void) | null,
     skipLabel: string | null,
-    onSkip: (() => void) | null
+    onSkip: (() => void) | null,
   ): void {
     if (!elements) return;
 
@@ -550,13 +555,13 @@ export function createOnboardingController(
       skipAllLabel: t('onboarding.skipAll'),
       onSkipAll: complete,
       stepIndex,
-      totalSteps: ONBOARDING_STEPS.length
+      totalSteps: ONBOARDING_STEPS.length,
     });
 
     bindTooltipActions(elements.tooltip, {
       onPrimary: onPrimary ?? undefined,
       onSkip: onSkip ?? undefined,
-      onSkipAll: complete
+      onSkipAll: complete,
     });
   }
 
@@ -585,7 +590,7 @@ export function createOnboardingController(
         null,
         null,
         t('onboarding.skip'),
-        () => advance()
+        () => advance(),
       );
 
       if (micGranted && accGranted) {
@@ -612,16 +617,20 @@ export function createOnboardingController(
         setTooltipContent(
           t('onboarding.tryit.title'),
           t('onboarding.tryit.recording', { shortcut }),
-          null, null,
-          t('onboarding.skip'), () => advance()
+          null,
+          null,
+          t('onboarding.skip'),
+          () => advance(),
         );
       } else if (cmd === 'stop' && tryItSubState === 'recording') {
         tryItSubState = 'processing';
         setTooltipContent(
           t('onboarding.tryit.title'),
           t('onboarding.tryit.processing'),
-          null, null,
-          t('onboarding.skip'), () => advance()
+          null,
+          null,
+          t('onboarding.skip'),
+          () => advance(),
         );
       }
     });
@@ -634,8 +643,10 @@ export function createOnboardingController(
       setTooltipContent(
         t('onboarding.tryit.success'),
         t('onboarding.tryit.successDescription'),
-        t('onboarding.tryit.cta'), () => complete(),
-        null, null
+        t('onboarding.tryit.cta'),
+        () => complete(),
+        null,
+        null,
       );
     });
   }
@@ -662,7 +673,7 @@ export function createOnboardingController(
 
     isActive() {
       return active;
-    }
+    },
   };
 }
 ```
@@ -679,6 +690,7 @@ git commit -m "feat(onboarding): add controller state machine with step flow"
 ## Task 5: Add onboarding CSS
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/styles.css`
 
 **Step 1: Append onboarding styles at the end of `styles.css`**
@@ -712,7 +724,12 @@ Add the following CSS after the last rule (`.mt-24`):
     0 0 0 9999px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   opacity: 0;
-  transition: top 300ms ease, left 300ms ease, width 300ms ease, height 300ms ease, opacity 200ms ease;
+  transition:
+    top 300ms ease,
+    left 300ms ease,
+    width 300ms ease,
+    height 300ms ease,
+    opacity 200ms ease;
 }
 
 .onboarding-spotlight--visible {
@@ -728,7 +745,11 @@ Add the following CSS after the last rule (`.mt-24`):
   padding: 24px;
   max-width: 360px;
   opacity: 0;
-  transition: opacity 200ms ease, top 300ms ease, left 300ms ease, transform 300ms ease;
+  transition:
+    opacity 200ms ease,
+    top 300ms ease,
+    left 300ms ease,
+    transform 300ms ease;
 }
 
 .onboarding-tooltip--visible {
@@ -857,9 +878,11 @@ git commit -m "feat(onboarding): add CSS for coach-marks overlay and permission 
 ## Task 6: Integrate onboarding into renderer boot sequence
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/index.ts`
 
 This is the integration task. We need to:
+
 1. Export the `navigateTo` function so the onboarding controller can call it
 2. Hook onboarding into `boot()`
 3. Add a "Restart Guide" button to Settings
@@ -874,7 +897,7 @@ import {
   createOnboardingController,
   isOnboardingCompleted,
   clearOnboardingCompleted,
-  type OnboardingController
+  type OnboardingController,
 } from './onboarding/onboarding-controller';
 ```
 
@@ -941,13 +964,13 @@ In the `renderSettings` function, before the final closing backtick (after the A
 After the `set-locale` binding block (around line 557), add:
 
 ```typescript
-  document.querySelector('[data-action="restart-guide"]')?.addEventListener('click', () => {
-    clearOnboardingCompleted();
-    if (onboardingController) {
-      onboardingController.destroy();
-    }
-    startOnboarding();
-  });
+document.querySelector('[data-action="restart-guide"]')?.addEventListener('click', () => {
+  clearOnboardingCompleted();
+  if (onboardingController) {
+    onboardingController.destroy();
+  }
+  startOnboarding();
+});
 ```
 
 **Step 7: Add pipeline-complete tracking in `applyCompletionResult`**
@@ -955,7 +978,7 @@ After the `set-locale` binding block (around line 557), add:
 In `applyCompletionResult` (around line 724), after the existing code, add at the end of the function:
 
 ```typescript
-  pipelineCompleteCallbacks.forEach((cb) => cb());
+pipelineCompleteCallbacks.forEach((cb) => cb());
 ```
 
 **Step 8: Create `startOnboarding` helper and update `boot`**
@@ -974,7 +997,7 @@ function startOnboarding(): void {
       return () => {
         pipelineCompleteCallbacks = pipelineCompleteCallbacks.filter((cb) => cb !== callback);
       };
-    }
+    },
   });
   onboardingController.start();
 }
@@ -983,9 +1006,9 @@ function startOnboarding(): void {
 Then in `boot()`, after the `render()` call at the end (line ~813), add:
 
 ```typescript
-  if (!isOnboardingCompleted()) {
-    startOnboarding();
-  }
+if (!isOnboardingCompleted()) {
+  startOnboarding();
+}
 ```
 
 **Step 9: Verify the app builds**
@@ -1005,6 +1028,7 @@ git commit -m "feat(onboarding): integrate controller into renderer boot and set
 ## Task 7: Add permission-loss modal
 
 **Files:**
+
 - Modify: `apps/desktop/src/renderer/index.ts`
 - Modify: `apps/desktop/src/shared/ipc.ts`
 
@@ -1033,9 +1057,9 @@ After the `startOnboarding` function, add:
 function showPermissionLostModal(missing: DesktopPermissionKind[]): void {
   if (document.querySelector('.perm-modal-backdrop')) return;
 
-  const permNames = missing.map((k) =>
-    k === 'microphone' ? t('settings.microphone') : t('settings.accessibility')
-  ).join(', ');
+  const permNames = missing
+    .map((k) => (k === 'microphone' ? t('settings.microphone') : t('settings.accessibility')))
+    .join(', ');
 
   const backdrop = document.createElement('div');
   backdrop.className = 'perm-modal-backdrop';
@@ -1077,7 +1101,10 @@ Modify the existing `handleDesktopAttention` function (around line 774):
 async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<void> {
   if (event.kind !== 'permission-required') return;
   state.view = 'home';
-  setStatus(t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }), 'warning');
+  setStatus(
+    t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }),
+    'warning',
+  );
   await refreshAll();
 }
 
@@ -1089,7 +1116,10 @@ async function handleDesktopAttention(event: DesktopAttentionEvent): Promise<voi
   }
   if (event.kind !== 'permission-required') return;
   state.view = 'home';
-  setStatus(t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }), 'warning');
+  setStatus(
+    t('status.grantPermissions', { permissions: describeMissingPermissions(event.missing) }),
+    'warning',
+  );
   await refreshAll();
 }
 ```
@@ -1106,6 +1136,7 @@ git commit -m "feat(onboarding): add permission-loss modal with open-settings ac
 ## Task 8: Add onboarding controller unit tests
 
 **Files:**
+
 - Create: `apps/desktop/src/renderer/onboarding/onboarding-controller.test.ts`
 
 Tests focus on the controller's state machine logic. Since this runs in Node.js test runner (no DOM), we test the pure logic paths by mocking the deps.

@@ -7,12 +7,9 @@ import {
   positionTooltip,
   renderTooltipContent,
   bindTooltipActions,
-  type OverlayElements
+  type OverlayElements,
 } from './onboarding-overlay';
-import {
-  ONBOARDING_STEPS,
-  STORAGE_KEY,
-} from './onboarding-steps';
+import { ONBOARDING_STEPS, STORAGE_KEY } from './onboarding-steps';
 import type { DesktopStatus, RecordingCommand } from '../../shared/ipc';
 
 export interface OnboardingControllerDeps {
@@ -55,9 +52,7 @@ export function clearOnboardingCompleted(): void {
   }
 }
 
-export function createOnboardingController(
-  deps: OnboardingControllerDeps
-): OnboardingController {
+export function createOnboardingController(deps: OnboardingControllerDeps): OnboardingController {
   let stepIndex = -1;
   let elements: OverlayElements | null = null;
   let permissionPollTimer: number | null = null;
@@ -167,7 +162,7 @@ export function createOnboardingController(
     primaryLabel: string | null,
     onPrimary: (() => void) | null,
     skipLabel: string | null,
-    onSkip: (() => void) | null
+    onSkip: (() => void) | null,
   ): void {
     if (!elements) return;
 
@@ -181,13 +176,13 @@ export function createOnboardingController(
       skipAllLabel: t('onboarding.skipAll'),
       onSkipAll: complete,
       stepIndex,
-      totalSteps: ONBOARDING_STEPS.length
+      totalSteps: ONBOARDING_STEPS.length,
     });
 
     bindTooltipActions(elements.tooltip, {
       onPrimary: onPrimary ?? undefined,
       onSkip: onSkip ?? undefined,
-      onSkipAll: complete
+      onSkipAll: complete,
     });
   }
 
@@ -216,7 +211,7 @@ export function createOnboardingController(
         null,
         null,
         t('onboarding.skip'),
-        () => advance()
+        () => advance(),
       );
 
       if (micGranted && accGranted) {
@@ -243,16 +238,20 @@ export function createOnboardingController(
         setTooltipContent(
           t('onboarding.tryit.title'),
           t('onboarding.tryit.recording', { shortcut }),
-          null, null,
-          t('onboarding.skip'), () => advance()
+          null,
+          null,
+          t('onboarding.skip'),
+          () => advance(),
         );
       } else if (cmd === 'stop' && tryItSubState === 'recording') {
         tryItSubState = 'processing';
         setTooltipContent(
           t('onboarding.tryit.title'),
           t('onboarding.tryit.processing'),
-          null, null,
-          t('onboarding.skip'), () => advance()
+          null,
+          null,
+          t('onboarding.skip'),
+          () => advance(),
         );
       }
     });
@@ -265,8 +264,10 @@ export function createOnboardingController(
       setTooltipContent(
         t('onboarding.tryit.success'),
         t('onboarding.tryit.successDescription'),
-        t('onboarding.tryit.cta'), () => complete(),
-        null, null
+        t('onboarding.tryit.cta'),
+        () => complete(),
+        null,
+        null,
       );
     });
   }
@@ -293,6 +294,6 @@ export function createOnboardingController(
 
     isActive() {
       return active;
-    }
+    },
   };
 }

@@ -1,6 +1,7 @@
 # Product Docs
 
 Use this folder for:
+
 - vision documents
 - PRDs
 - MVP scope docs
@@ -8,5 +9,6 @@ Use this folder for:
 - settings and interaction specs
 
 Current starting points:
+
 - `docs/product/vision.md`
 - `docs/product/desktop-mvp.md`
